@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+target/
+.anchor/
+test-ledger/
+.DS_Store
+*.swp
+.vercel
