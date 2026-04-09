@@ -58,17 +58,7 @@ pub fn handler(ctx: Context<PlaceFlip>, amount: u64) -> Result<()> {
         FlipError::InsufficientVaultBalance
     );
 
-    // transfer SOL from player to vault
-    let cpi_ctx = CpiContext::new(
-        ctx.accounts.system_program.key(),
-        system_program::Transfer {
-            from: ctx.accounts.player.to_account_info(),
-            to: ctx.accounts.vault.to_account_info(),
-        },
-    );
-    system_program::transfer(cpi_ctx, amount)?;
-
-    // update vault
+    // state update before CPI
     let vault = &mut ctx.accounts.vault;
     vault.balance = vault.balance
         .checked_add(amount)
@@ -79,6 +69,16 @@ pub fn handler(ctx: Context<PlaceFlip>, amount: u64) -> Result<()> {
     vault.total_volume = vault.total_volume
         .checked_add(amount)
         .ok_or(FlipError::MathOverflow)?;
+
+    // transfer SOL from player to vault
+    let cpi_ctx = CpiContext::new(
+        ctx.accounts.system_program.key(),
+        system_program::Transfer {
+            from: ctx.accounts.player.to_account_info(),
+            to: ctx.accounts.vault.to_account_info(),
+        },
+    );
+    system_program::transfer(cpi_ctx, amount)?;
 
     // init flip game
     let flip = &mut ctx.accounts.flip_game;

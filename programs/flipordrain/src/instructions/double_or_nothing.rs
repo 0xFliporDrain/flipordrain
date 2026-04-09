@@ -57,10 +57,13 @@ pub fn handler(ctx: Context<DoubleOrNothing>) -> Result<()> {
         FlipError::InsufficientVaultBalance
     );
 
-    // update vault counter
+    // update vault counters
     let vault = &mut ctx.accounts.vault;
     vault.total_flips = vault.total_flips
         .checked_add(1)
+        .ok_or(FlipError::MathOverflow)?;
+    vault.total_volume = vault.total_volume
+        .checked_add(doubled_amt)
         .ok_or(FlipError::MathOverflow)?;
 
     // init new flip linked to previous

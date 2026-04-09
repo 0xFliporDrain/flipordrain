@@ -4,11 +4,14 @@
 resolution = true
 skip-lint = false
 
+[programs.localnet]
+flipordrain = "8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG"
+
 [programs.devnet]
 flipordrain = "8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

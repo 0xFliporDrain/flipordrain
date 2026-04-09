@@ -16,7 +16,7 @@ pub struct ClaimWinnings<'info> {
     #[account(
         mut,
         constraint = flip_game.player == player.key() @ FlipError::Unauthorized,
-        constraint = flip_game.result == Some(true) @ FlipError::CannotDoubleOnLoss,
+        constraint = flip_game.result == Some(true) @ FlipError::FlipNotWon,
         close = player,
     )]
     pub flip_game: Account<'info, FlipGame>,

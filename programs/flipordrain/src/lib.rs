@@ -45,4 +45,8 @@ pub mod flipordrain {
     pub fn withdraw_house(ctx: Context<WithdrawHouse>, amount: u64) -> Result<()> {
         instructions::withdraw_house::handler(ctx, amount)
     }
+
+    pub fn toggle_pause(ctx: Context<TogglePause>) -> Result<()> {
+        instructions::toggle_pause::handler(ctx)
+    }
 }
