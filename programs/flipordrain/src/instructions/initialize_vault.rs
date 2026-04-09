@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::state::FlipVault;
 use crate::constants::VAULT_SEED;
+use crate::errors::FlipError;
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
@@ -23,6 +24,10 @@ pub fn handler(
     min_bet: u64,
     max_bet: u64,
 ) -> Result<()> {
+    require!(house_edge_bps <= 1000, FlipError::MathOverflow); // max 10%
+    require!(min_bet > 0, FlipError::BetTooSmall);
+    require!(max_bet >= min_bet, FlipError::BetTooLarge);
+
     let vault = &mut ctx.accounts.vault;
     vault.authority = ctx.accounts.authority.key();
     vault.balance = 0;

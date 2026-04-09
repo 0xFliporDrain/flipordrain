@@ -7,9 +7,10 @@ use crate::state::{FlipGame, FlipVault, PlayerStats};
 #[derive(Accounts)]
 pub struct ResolveFlip<'info> {
     #[account(
-        mut,
         seeds = [VAULT_SEED],
         bump = vault.bump,
+        // only vault authority can resolve (VRF callback in production)
+        constraint = vault.authority == resolver.key() @ FlipError::UnauthorizedResolver,
     )]
     pub vault: Account<'info, FlipVault>,
 
@@ -26,40 +27,22 @@ pub struct ResolveFlip<'info> {
     )]
     pub player_stats: Account<'info, PlayerStats>,
 
-    /// CHECK: player receives payout if won
-    #[account(mut, constraint = player.key() == flip_game.player @ FlipError::Unauthorized)]
-    pub player: UncheckedAccount<'info>,
-
-    // TODO: replace with VRF callback authority
     pub resolver: Signer<'info>,
-
-    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
+    // determine win/loss — production: verify VRF proof
     let won = result[0] % 2 == 0;
 
     let flip = &mut ctx.accounts.flip_game;
     flip.result = Some(won);
     flip.resolved_at = Some(Clock::get()?.unix_timestamp);
 
+    // only update stats here, payout happens in claim_winnings
     let stats = &mut ctx.accounts.player_stats;
-
     if won {
-        let payout = flip.payout;
-        let vault = &mut ctx.accounts.vault;
-
-        // state update before transfer
-        vault.balance = vault.balance
-            .checked_sub(payout)
-            .ok_or(FlipError::InsufficientVaultBalance)?;
-
-        // direct lamport transfer from vault PDA
-        **vault.to_account_info().try_borrow_mut_lamports()? -= payout;
-        **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += payout;
-
         stats.total_won = stats.total_won
-            .checked_add(payout)
+            .checked_add(flip.payout)
             .ok_or(FlipError::MathOverflow)?;
         stats.current_streak = stats.current_streak
             .checked_add(1)
@@ -67,14 +50,12 @@ pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
         if stats.current_streak > stats.best_streak {
             stats.best_streak = stats.current_streak;
         }
-
-        msg!("flip won! payout: {} lamports", payout);
+        msg!("flip won! claim via claim_winnings");
     } else {
         stats.total_lost = stats.total_lost
             .checked_add(flip.amount)
             .ok_or(FlipError::MathOverflow)?;
         stats.current_streak = 0;
-
         msg!("flip lost. {} lamports stay in vault", flip.amount);
     }
 

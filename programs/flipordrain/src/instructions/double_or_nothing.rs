@@ -14,11 +14,12 @@ pub struct DoubleOrNothing<'info> {
     )]
     pub vault: Account<'info, FlipVault>,
 
-    /// the previous winning flip
+    /// the previous winning flip — closed to prevent double claim
     #[account(
         mut,
         constraint = prev_flip.player == player.key() @ FlipError::Unauthorized,
         constraint = prev_flip.result == Some(true) @ FlipError::CannotDoubleOnLoss,
+        close = player,
     )]
     pub prev_flip: Account<'info, FlipGame>,
 
