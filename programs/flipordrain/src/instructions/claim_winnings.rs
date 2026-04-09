@@ -28,23 +28,24 @@ pub struct ClaimWinnings<'info> {
 }
 
 pub fn handler(ctx: Context<ClaimWinnings>) -> Result<()> {
-    let flip = &ctx.accounts.flip_game;
+    let payout = ctx.accounts.flip_game.payout;
 
-    require!(flip.result.is_some(), FlipError::FlipNotResolved);
-    require!(flip.result == Some(true), FlipError::CannotDoubleOnLoss);
-
-    let payout = flip.payout;
+    // state update first
     let vault = &mut ctx.accounts.vault;
-
     vault.balance = vault.balance
         .checked_sub(payout)
         .ok_or(FlipError::InsufficientVaultBalance)?;
 
+    // rent-exempt check
     let vault_info = vault.to_account_info();
-    let player_info = ctx.accounts.player.to_account_info();
+    let rent = Rent::get()?.minimum_balance(vault_info.data_len());
+    require!(
+        vault_info.lamports().checked_sub(payout).unwrap_or(0) >= rent,
+        FlipError::InsufficientVaultBalance
+    );
 
     **vault_info.try_borrow_mut_lamports()? -= payout;
-    **player_info.try_borrow_mut_lamports()? += payout;
+    **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += payout;
 
     msg!("claimed {} lamports", payout);
     Ok(())

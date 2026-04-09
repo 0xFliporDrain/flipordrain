@@ -4,11 +4,8 @@
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-flipordrain = "GDdwwqCf97NMe4Gi2Rm22NHZF3NRJnu2PovZ8MUfJVJ5"
-
-[registry]
-url = "https://api.apr.dev"
+[programs.devnet]
+flipordrain = "8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG"
 
 [provider]
 cluster = "Devnet"

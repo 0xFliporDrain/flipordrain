@@ -9,14 +9,13 @@ pub struct ResolveFlip<'info> {
     #[account(
         seeds = [VAULT_SEED],
         bump = vault.bump,
-        // only vault authority can resolve (VRF callback in production)
         constraint = vault.authority == resolver.key() @ FlipError::UnauthorizedResolver,
     )]
     pub vault: Account<'info, FlipVault>,
 
     #[account(
         mut,
-        constraint = flip_game.result.is_none() @ FlipError::FlipNotResolved,
+        constraint = flip_game.result.is_none() @ FlipError::AlreadyClaimed,
     )]
     pub flip_game: Account<'info, FlipGame>,
 
@@ -27,18 +26,20 @@ pub struct ResolveFlip<'info> {
     )]
     pub player_stats: Account<'info, PlayerStats>,
 
+    /// CHECK: receives rent refund if flip is lost
+    #[account(mut, constraint = player.key() == flip_game.player @ FlipError::Unauthorized)]
+    pub player: UncheckedAccount<'info>,
+
     pub resolver: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
-    // determine win/loss — production: verify VRF proof
     let won = result[0] % 2 == 0;
 
     let flip = &mut ctx.accounts.flip_game;
     flip.result = Some(won);
     flip.resolved_at = Some(Clock::get()?.unix_timestamp);
 
-    // only update stats here, payout happens in claim_winnings
     let stats = &mut ctx.accounts.player_stats;
     if won {
         stats.total_won = stats.total_won
@@ -50,13 +51,21 @@ pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
         if stats.current_streak > stats.best_streak {
             stats.best_streak = stats.current_streak;
         }
-        msg!("flip won! claim via claim_winnings");
+        msg!("flip won! payout: {} — claim via claim_winnings", flip.payout);
     } else {
         stats.total_lost = stats.total_lost
             .checked_add(flip.amount)
             .ok_or(FlipError::MathOverflow)?;
         stats.current_streak = 0;
-        msg!("flip lost. {} lamports stay in vault", flip.amount);
+
+        // close lost flip — return rent to player
+        let flip_info = flip.to_account_info();
+        let player_info = ctx.accounts.player.to_account_info();
+        let lamports = flip_info.lamports();
+        **flip_info.try_borrow_mut_lamports()? = 0;
+        **player_info.try_borrow_mut_lamports()? += lamports;
+
+        msg!("flip lost. {} lamports stay in vault. rent refunded", flip.amount);
     }
 
     Ok(())

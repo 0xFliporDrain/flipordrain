@@ -30,10 +30,14 @@ pub fn handler(ctx: Context<WithdrawHouse>, amount: u64) -> Result<()> {
         .ok_or(FlipError::MathOverflow)?;
 
     let vault_info = vault.to_account_info();
-    let authority_info = ctx.accounts.authority.to_account_info();
+    let rent = Rent::get()?.minimum_balance(vault_info.data_len());
+    require!(
+        vault_info.lamports().checked_sub(amount).unwrap_or(0) >= rent,
+        FlipError::InsufficientVaultBalance
+    );
 
     **vault_info.try_borrow_mut_lamports()? -= amount;
-    **authority_info.try_borrow_mut_lamports()? += amount;
+    **ctx.accounts.authority.to_account_info().try_borrow_mut_lamports()? += amount;
 
     msg!("house withdrew {} lamports", amount);
     Ok(())

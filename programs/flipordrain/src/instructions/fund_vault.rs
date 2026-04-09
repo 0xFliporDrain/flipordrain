@@ -19,6 +19,11 @@ pub struct FundVault<'info> {
 }
 
 pub fn handler(ctx: Context<FundVault>, amount: u64) -> Result<()> {
+    // state update before CPI
+    ctx.accounts.vault.balance = ctx.accounts.vault.balance
+        .checked_add(amount)
+        .ok_or(FlipError::MathOverflow)?;
+
     let cpi_ctx = CpiContext::new(
         ctx.accounts.system_program.key(),
         system_program::Transfer {
@@ -27,8 +32,5 @@ pub fn handler(ctx: Context<FundVault>, amount: u64) -> Result<()> {
         },
     );
     system_program::transfer(cpi_ctx, amount)?;
-    ctx.accounts.vault.balance = ctx.accounts.vault.balance
-        .checked_add(amount)
-        .ok_or(FlipError::MathOverflow)?;
     Ok(())
 }
