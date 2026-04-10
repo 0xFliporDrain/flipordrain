@@ -158,14 +158,20 @@ export function useFlip() {
     )
   }, [refreshVault, refreshStats, refreshBalance])
 
+  // clear polling on wallet disconnect
+  useEffect(() => {
+    if (!publicKey) clearPolling()
+  }, [publicKey, clearPolling])
+
   // poll for flip result
   const pollForResult = useCallback(
     (flipPda: PublicKey, betAmount: number, isDouble: boolean) => {
       clearPolling()
 
       pollRef.current = setInterval(async () => {
+        if (!program) { clearPolling(); return }
         try {
-          const flip = await program!.account.flipGame.fetch(flipPda)
+          const flip = await program.account.flipGame.fetch(flipPda)
           if (flip.result !== null) {
             clearPolling()
             const won = flip.result === true
@@ -181,15 +187,19 @@ export function useFlip() {
           }
         } catch {
           // flip account might be closed (loss) — check if account exists
-          const acct = await connection.getAccountInfo(flipPda)
-          if (!acct) {
-            clearPolling()
-            setResult({ won: false, amount: betAmount, payout: betAmount, flipPda, canDouble: false })
-            setState('lost')
-            addToHistory({ won: false, amount: betAmount, payout: 0, ts: Date.now(), isDouble })
-            refreshVault()
-            refreshStats()
-            refreshBalance()
+          try {
+            const acct = await connection.getAccountInfo(flipPda)
+            if (!acct) {
+              clearPolling()
+              setResult({ won: false, amount: betAmount, payout: betAmount, flipPda, canDouble: false })
+              setState('lost')
+              addToHistory({ won: false, amount: betAmount, payout: 0, ts: Date.now(), isDouble })
+              refreshVault()
+              refreshStats()
+              refreshBalance()
+            }
+          } catch {
+            // network error in fallback check — keep polling
           }
         }
       }, POLL_INTERVAL_MS)
@@ -222,7 +232,10 @@ export function useFlip() {
       try {
         const amount = new BN(Math.floor(amountSol * LAMPORTS_PER_SOL))
         const [vaultPda] = getVaultPda()
-        const [flipPda] = getFlipPda(publicKey, vault.totalFlips)
+        // Fetch fresh vault to get current totalFlips (avoids stale PDA race condition)
+        const freshVault = await program.account.flipVault.fetch(vaultPda)
+        const currentFlips = freshVault.totalFlips.toNumber()
+        const [flipPda] = getFlipPda(publicKey, currentFlips)
         const [statsPda] = getStatsPda(publicKey)
 
         await program.methods
@@ -301,7 +314,8 @@ export function useFlip() {
 
       try {
         const [vaultPda] = getVaultPda()
-        const [newFlipPda] = getFlipPda(publicKey, vault.totalFlips)
+        const freshVault = await program.account.flipVault.fetch(vaultPda)
+        const [newFlipPda] = getFlipPda(publicKey, freshVault.totalFlips.toNumber())
 
         await program.methods
           .doubleOrNothing()
@@ -315,12 +329,13 @@ export function useFlip() {
           .rpc()
 
         setState('waiting')
-        const prevResult = result
-        setResult((prev) =>
-          prev ? { ...prev, flipPda: newFlipPda, canDouble: false } : null
-        )
-
-        pollForResult(newFlipPda, prevResult?.payout || 0, true)
+        setResult((prev) => {
+          // capture payout from functional update to avoid stale closure
+          if (prev) {
+            pollForResult(newFlipPda, prev.payout, true)
+          }
+          return prev ? { ...prev, flipPda: newFlipPda, canDouble: false } : null
+        })
       } catch (e: any) {
         console.error('double error:', e)
         clearPolling()
