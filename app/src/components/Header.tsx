@@ -5,9 +5,11 @@ import type { PlayerInfo } from '../hooks/useFlip'
 type Props = {
   balance: number
   stats: PlayerInfo | null
+  loading?: boolean
+  connecting?: boolean
 }
 
-export default function Header({ balance, stats }: Props) {
+export default function Header({ balance, stats, loading, connecting }: Props) {
   const { connected } = useWallet()
 
   return (
@@ -18,9 +20,15 @@ export default function Header({ balance, stats }: Props) {
         </h1>
       </div>
       <div className="hdr-right">
-        {connected && (
+        {connecting ? (
           <div className="hdr-stats">
-            <span className="hdr-bal">{balance.toFixed(2)} SOL</span>
+            <span className="hdr-bal shimmer">---</span>
+          </div>
+        ) : connected ? (
+          <div className="hdr-stats">
+            <span className={`hdr-bal ${loading ? 'shimmer' : ''}`}>
+              {balance.toFixed(2)} SOL
+            </span>
             {stats && (
               <span className="hdr-streak" title="Current streak">
                 {stats.currentStreak > 0
@@ -29,7 +37,7 @@ export default function Header({ balance, stats }: Props) {
               </span>
             )}
           </div>
-        )}
+        ) : null}
         <WalletMultiButton />
       </div>
     </header>

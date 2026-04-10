@@ -2,15 +2,29 @@ import type { PlayerInfo } from '../hooks/useFlip'
 
 type Props = {
   stats: PlayerInfo | null
+  loading?: boolean
 }
 
-export default function StatsBar({ stats }: Props) {
+export default function StatsBar({ stats, loading }: Props) {
+  if (loading && !stats) {
+    return (
+      <div className="stats-bar">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="stat">
+            <span className="stat-val shimmer">--</span>
+            <span className="stat-label shimmer">---</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   if (!stats) return null
 
   const net = stats.totalWon - stats.totalLost
 
   return (
-    <div className="stats-bar">
+    <div className="stats-bar fade-in">
       <div className="stat">
         <span className="stat-val">{stats.totalFlips}</span>
         <span className="stat-label">flips</span>

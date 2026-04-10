@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
@@ -32,6 +32,40 @@ export type PlayerInfo = {
   volume: number
 }
 
+export type FlipRecord = {
+  won: boolean
+  amount: number
+  payout: number
+  ts: number
+  sig?: string
+  isDouble: boolean
+}
+
+export type FlipError = {
+  type: 'tx_rejected' | 'vrf_timeout' | 'network' | 'unknown'
+  message: string
+}
+
+const HISTORY_KEY = 'flipordrain:history'
+const VRF_TIMEOUT_MS = 60_000
+const POLL_INTERVAL_MS = 2_000
+
+function loadHistory(): FlipRecord[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.slice(0, 200)
+  } catch {
+    return []
+  }
+}
+
+function saveHistory(records: FlipRecord[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(records.slice(0, 200)))
+}
+
 export function useFlip() {
   const { publicKey } = useWallet()
   const { program, connection } = useProgram()
@@ -40,6 +74,33 @@ export function useFlip() {
   const [vault, setVault] = useState<VaultInfo | null>(null)
   const [stats, setStats] = useState<PlayerInfo | null>(null)
   const [balance, setBalance] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<FlipError | null>(null)
+  const [history, setHistory] = useState<FlipRecord[]>(loadHistory)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const addToHistory = useCallback((record: FlipRecord) => {
+    setHistory((prev) => {
+      const next = [record, ...prev].slice(0, 200)
+      saveHistory(next)
+      return next
+    })
+  }, [])
+
+  const clearPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+  }, [])
+
+  // cleanup on unmount
+  useEffect(() => clearPolling, [clearPolling])
 
   // fetch vault info
   const refreshVault = useCallback(async () => {
@@ -82,15 +143,73 @@ export function useFlip() {
   // fetch SOL balance
   const refreshBalance = useCallback(async () => {
     if (!connection || !publicKey) return
-    const bal = await connection.getBalance(publicKey)
-    setBalance(bal / LAMPORTS_PER_SOL)
+    try {
+      const bal = await connection.getBalance(publicKey)
+      setBalance(bal / LAMPORTS_PER_SOL)
+    } catch {
+      // silent
+    }
   }, [connection, publicKey])
 
   useEffect(() => {
-    refreshVault()
-    refreshStats()
-    refreshBalance()
+    setLoading(true)
+    Promise.all([refreshVault(), refreshStats(), refreshBalance()]).finally(() =>
+      setLoading(false)
+    )
   }, [refreshVault, refreshStats, refreshBalance])
+
+  // poll for flip result
+  const pollForResult = useCallback(
+    (flipPda: PublicKey, betAmount: number, isDouble: boolean) => {
+      clearPolling()
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const flip = await program!.account.flipGame.fetch(flipPda)
+          if (flip.result !== null) {
+            clearPolling()
+            const won = flip.result === true
+            const payout = flip.payout.toNumber() / LAMPORTS_PER_SOL
+            const amt = flip.amount.toNumber() / LAMPORTS_PER_SOL
+
+            setResult({ won, amount: amt, payout: won ? payout : amt, flipPda, canDouble: won })
+            setState(won ? 'won' : 'lost')
+            addToHistory({ won, amount: amt, payout: won ? payout : amt, ts: Date.now(), isDouble })
+            refreshVault()
+            refreshStats()
+            refreshBalance()
+          }
+        } catch {
+          // flip account might be closed (loss) — check if account exists
+          const acct = await connection.getAccountInfo(flipPda)
+          if (!acct) {
+            clearPolling()
+            setResult({ won: false, amount: betAmount, payout: betAmount, flipPda, canDouble: false })
+            setState('lost')
+            addToHistory({ won: false, amount: betAmount, payout: 0, ts: Date.now(), isDouble })
+            refreshVault()
+            refreshStats()
+            refreshBalance()
+          }
+        }
+      }, POLL_INTERVAL_MS)
+
+      // VRF timeout
+      timeoutRef.current = setTimeout(() => {
+        if (pollRef.current) {
+          clearInterval(pollRef.current)
+          pollRef.current = null
+        }
+        setError({
+          type: 'vrf_timeout',
+          message: 'Flip is taking too long — the resolver may be offline. Your SOL is safe, check back later.',
+        })
+        setState('idle')
+        setResult(null)
+      }, VRF_TIMEOUT_MS)
+    },
+    [program, connection, clearPolling, addToHistory, refreshVault, refreshStats, refreshBalance]
+  )
 
   // place flip
   const placeFlip = useCallback(
@@ -98,6 +217,7 @@ export function useFlip() {
       if (!program || !publicKey || !vault) return
       setState('placing')
       setResult(null)
+      setError(null)
 
       try {
         const amount = new BN(Math.floor(amountSol * LAMPORTS_PER_SOL))
@@ -117,81 +237,57 @@ export function useFlip() {
           .rpc()
 
         setState('waiting')
-
-        // poll for resolution (the resolver/backend resolves it)
-        const poll = setInterval(async () => {
-          try {
-            const flip = await program.account.flipGame.fetch(flipPda)
-            if (flip.result !== null) {
-              clearInterval(poll)
-              const won = flip.result === true
-              const payout = flip.payout.toNumber() / LAMPORTS_PER_SOL
-              const amt = flip.amount.toNumber() / LAMPORTS_PER_SOL
-
-              setResult({
-                won,
-                amount: amt,
-                payout: won ? payout : amt,
-                flipPda,
-                canDouble: won,
-              })
-              setState(won ? 'won' : 'lost')
-              refreshVault()
-              refreshStats()
-              refreshBalance()
-            }
-          } catch {
-            // flip account might be closed (loss) — check if account exists
-            const acct = await connection.getAccountInfo(flipPda)
-            if (!acct) {
-              clearInterval(poll)
-              setResult({
-                won: false,
-                amount: amountSol,
-                payout: amountSol,
-                flipPda,
-                canDouble: false,
-              })
-              setState('lost')
-              refreshVault()
-              refreshStats()
-              refreshBalance()
-            }
-          }
-        }, 2000)
-
-        // timeout after 60s
-        setTimeout(() => clearInterval(poll), 60000)
+        pollForResult(flipPda, amountSol, false)
       } catch (e: any) {
         console.error('flip error:', e)
+        clearPolling()
         setState('idle')
-        throw e
+
+        const msg = e?.message || String(e)
+        if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
+          setError({ type: 'tx_rejected', message: 'Transaction was rejected.' })
+        } else if (msg.includes('blockhash') || msg.includes('timeout')) {
+          setError({ type: 'network', message: 'Network error — try again.' })
+        } else {
+          setError({ type: 'unknown', message: msg.slice(0, 120) })
+        }
       }
     },
-    [program, publicKey, vault, connection, refreshVault, refreshStats, refreshBalance]
+    [program, publicKey, vault, pollForResult, clearPolling]
   )
 
   // claim winnings
   const claimWinnings = useCallback(
     async (flipPda: PublicKey) => {
       if (!program || !publicKey) return
-      const [vaultPda] = getVaultPda()
+      setError(null)
 
-      await program.methods
-        .claimWinnings()
-        .accountsPartial({
-          vault: vaultPda,
-          flipGame: flipPda,
-          player: publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc()
+      try {
+        const [vaultPda] = getVaultPda()
 
-      setResult(null)
-      setState('idle')
-      refreshVault()
-      refreshStats()
-      refreshBalance()
+        await program.methods
+          .claimWinnings()
+          .accountsPartial({
+            vault: vaultPda,
+            flipGame: flipPda,
+            player: publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc()
+
+        setResult(null)
+        setState('idle')
+        refreshVault()
+        refreshStats()
+        refreshBalance()
+      } catch (e: any) {
+        const msg = e?.message || String(e)
+        if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
+          setError({ type: 'tx_rejected', message: 'Claim rejected.' })
+        } else {
+          setError({ type: 'unknown', message: 'Failed to claim: ' + msg.slice(0, 80) })
+        }
+      }
     },
     [program, publicKey, refreshVault, refreshStats, refreshBalance]
   )
@@ -201,69 +297,54 @@ export function useFlip() {
     async (prevFlipPda: PublicKey) => {
       if (!program || !publicKey || !vault) return
       setState('placing')
+      setError(null)
 
-      const [vaultPda] = getVaultPda()
-      const [newFlipPda] = getFlipPda(publicKey, vault.totalFlips)
+      try {
+        const [vaultPda] = getVaultPda()
+        const [newFlipPda] = getFlipPda(publicKey, vault.totalFlips)
 
-      await program.methods
-        .doubleOrNothing()
-        .accountsPartial({
-          vault: vaultPda,
-          prevFlip: prevFlipPda,
-          newFlip: newFlipPda,
-          player: publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc()
+        await program.methods
+          .doubleOrNothing()
+          .accountsPartial({
+            vault: vaultPda,
+            prevFlip: prevFlipPda,
+            newFlip: newFlipPda,
+            player: publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc()
 
-      setState('waiting')
-      setResult((prev) =>
-        prev ? { ...prev, flipPda: newFlipPda, canDouble: false } : null
-      )
+        setState('waiting')
+        const prevResult = result
+        setResult((prev) =>
+          prev ? { ...prev, flipPda: newFlipPda, canDouble: false } : null
+        )
 
-      // poll for resolution
-      const poll = setInterval(async () => {
-        try {
-          const flip = await program.account.flipGame.fetch(newFlipPda)
-          if (flip.result !== null) {
-            clearInterval(poll)
-            const won = flip.result === true
-            const payout = flip.payout.toNumber() / LAMPORTS_PER_SOL
-            const amt = flip.amount.toNumber() / LAMPORTS_PER_SOL
+        pollForResult(newFlipPda, prevResult?.payout || 0, true)
+      } catch (e: any) {
+        console.error('double error:', e)
+        clearPolling()
+        setState(result?.won ? 'won' : 'idle')
 
-            setResult({
-              won,
-              amount: amt,
-              payout: won ? payout : amt,
-              flipPda: newFlipPda,
-              canDouble: won,
-            })
-            setState(won ? 'won' : 'lost')
-            refreshVault()
-            refreshStats()
-            refreshBalance()
-          }
-        } catch {
-          const acct = await connection.getAccountInfo(newFlipPda)
-          if (!acct) {
-            clearInterval(poll)
-            setState('lost')
-            refreshVault()
-            refreshStats()
-            refreshBalance()
-          }
+        const msg = e?.message || String(e)
+        if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
+          setError({ type: 'tx_rejected', message: 'Double rejected.' })
+        } else {
+          setError({ type: 'unknown', message: msg.slice(0, 120) })
         }
-      }, 2000)
-
-      setTimeout(() => clearInterval(poll), 60000)
+      }
     },
-    [program, publicKey, vault, connection, refreshVault, refreshStats, refreshBalance]
+    [program, publicKey, vault, result, pollForResult, clearPolling]
   )
 
   const reset = useCallback(() => {
     setState('idle')
     setResult(null)
-  }, [])
+    setError(null)
+    clearPolling()
+  }, [clearPolling])
+
+  const dismissError = useCallback(() => setError(null), [])
 
   return {
     state,
@@ -271,10 +352,14 @@ export function useFlip() {
     vault,
     stats,
     balance,
+    loading,
+    error,
+    history,
     placeFlip,
     claimWinnings,
     doubleOrNothing,
     reset,
+    dismissError,
     refreshVault,
   }
 }
