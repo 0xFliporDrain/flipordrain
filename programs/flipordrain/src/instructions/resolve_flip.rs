@@ -15,6 +15,7 @@ pub struct ResolveFlip<'info> {
 
     #[account(
         mut,
+        constraint = flip_game.player == player.key() @ FlipError::Unauthorized,
         constraint = flip_game.result.is_none() @ FlipError::AlreadyClaimed,
     )]
     pub flip_game: Account<'info, FlipGame>,
@@ -58,12 +59,14 @@ pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
             .ok_or(FlipError::MathOverflow)?;
         stats.current_streak = 0;
 
-        // close lost flip — return rent to player
+        // close lost flip — zero discriminator + return rent to player
         let flip_info = flip.to_account_info();
         let player_info = ctx.accounts.player.to_account_info();
         let lamports = flip_info.lamports();
         **flip_info.try_borrow_mut_lamports()? = 0;
         **player_info.try_borrow_mut_lamports()? += lamports;
+        // zero account data to prevent resurrection
+        flip_info.try_borrow_mut_data()?.fill(0);
 
         msg!("flip lost. {} lamports stay in vault. rent refunded", flip.amount);
     }

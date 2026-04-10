@@ -25,7 +25,7 @@ pub fn handler(ctx: Context<FundVault>, amount: u64) -> Result<()> {
         .ok_or(FlipError::MathOverflow)?;
 
     let cpi_ctx = CpiContext::new(
-        ctx.accounts.system_program.key(),
+        ctx.accounts.system_program.to_account_info(),
         system_program::Transfer {
             from: ctx.accounts.authority.to_account_info(),
             to: ctx.accounts.vault.to_account_info(),
