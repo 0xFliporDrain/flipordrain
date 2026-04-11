@@ -8,9 +8,10 @@ export function parseFlipLog(logs: string[], sig: string): FlipEvent | null {
   for (const log of logs) {
     // match our msg! patterns from resolve_flip
     if (log.includes('flip won!')) {
+      const playerMatch = log.match(/player: (\w+)/)
       const payoutMatch = log.match(/payout: (\d+)/)
       return {
-        player: '', // filled from tx accounts
+        player: playerMatch ? playerMatch[1] : '',
         amt: 0,
         won: true,
         payout: payoutMatch ? parseInt(payoutMatch[1]) : 0,
@@ -20,9 +21,10 @@ export function parseFlipLog(logs: string[], sig: string): FlipEvent | null {
       }
     }
     if (log.includes('flip lost')) {
-      const amtMatch = log.match(/(\d+) lamports/)
+      const playerMatch = log.match(/player: (\w+)/)
+      const amtMatch = log.match(/amt: (\d+)/)
       return {
-        player: '',
+        player: playerMatch ? playerMatch[1] : '',
         amt: amtMatch ? parseInt(amtMatch[1]) : 0,
         won: false,
         payout: 0,

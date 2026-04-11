@@ -16,7 +16,7 @@ pub struct ResolveFlip<'info> {
     #[account(
         mut,
         constraint = flip_game.player == player.key() @ FlipError::Unauthorized,
-        constraint = flip_game.result.is_none() @ FlipError::AlreadyClaimed,
+        constraint = flip_game.result.is_none() @ FlipError::AlreadyResolved,
     )]
     pub flip_game: Account<'info, FlipGame>,
 
@@ -52,7 +52,7 @@ pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
         if stats.current_streak > stats.best_streak {
             stats.best_streak = stats.current_streak;
         }
-        msg!("flip won! payout: {} — claim via claim_winnings", flip.payout);
+        msg!("flip won! player: {} payout: {}", flip.player, flip.payout);
     } else {
         stats.total_lost = stats.total_lost
             .checked_add(flip.amount)
@@ -68,7 +68,7 @@ pub fn handler(ctx: Context<ResolveFlip>, result: [u8; 32]) -> Result<()> {
         // zero account data to prevent resurrection
         flip_info.try_borrow_mut_data()?.fill(0);
 
-        msg!("flip lost. {} lamports stay in vault. rent refunded", flip.amount);
+        msg!("flip lost. player: {} amt: {} rent refunded", flip.player, flip.amount);
     }
 
     Ok(())

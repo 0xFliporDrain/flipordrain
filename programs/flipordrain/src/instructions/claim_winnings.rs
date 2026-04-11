@@ -39,10 +39,10 @@ pub fn handler(ctx: Context<ClaimWinnings>) -> Result<()> {
     // rent-exempt check
     let vault_info = vault.to_account_info();
     let rent = Rent::get()?.minimum_balance(vault_info.data_len());
-    require!(
-        vault_info.lamports().checked_sub(payout).unwrap_or(0) >= rent,
-        FlipError::InsufficientVaultBalance
-    );
+    let remaining = vault_info.lamports()
+        .checked_sub(payout)
+        .ok_or(FlipError::InsufficientVaultBalance)?;
+    require!(remaining >= rent, FlipError::InsufficientVaultBalance);
 
     **vault_info.try_borrow_mut_lamports()? -= payout;
     **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += payout;

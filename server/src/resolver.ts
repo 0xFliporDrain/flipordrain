@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 const PROGRAM_ID = new PublicKey(
-  process.env.PROGRAM_ID || '8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG'
+  process.env.PROGRAM_ID || '2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3'
 )
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || 'https://api.devnet.solana.com'
 const WALLET_PATH = process.env.ANCHOR_WALLET || `${process.env.HOME}/.config/solana/id.json`

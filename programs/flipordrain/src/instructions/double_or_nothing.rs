@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{FLIP_SEED, MAX_STREAK, VAULT_SEED};
+use crate::constants::{FLIP_SEED, MAX_STREAK, PAYOUT_MULTIPLIER_BPS, VAULT_SEED};
 use crate::errors::FlipError;
 use crate::state::{FlipGame, FlipVault};
 
@@ -46,10 +46,12 @@ pub fn handler(ctx: Context<DoubleOrNothing>) -> Result<()> {
 
     require!(streak <= MAX_STREAK, FlipError::MaxStreakReached);
 
-    // doubled amount = previous payout
+    // doubled amount = previous payout, apply house edge (1.9x not 2x)
     let doubled_amt = prev.payout;
     let new_payout = doubled_amt
-        .checked_mul(2)
+        .checked_mul(PAYOUT_MULTIPLIER_BPS as u64)
+        .ok_or(FlipError::MathOverflow)?
+        .checked_div(10000)
         .ok_or(FlipError::MathOverflow)?;
 
     require!(

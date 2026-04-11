@@ -24,6 +24,8 @@ pub enum FlipError {
     MaxStreakReached,
     #[msg("already claimed")]
     AlreadyClaimed,
+    #[msg("flip already resolved")]
+    AlreadyResolved,
     #[msg("flip was not won")]
     FlipNotWon,
 }
