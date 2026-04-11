@@ -1,24 +1,31 @@
 import { useMemo } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { AnchorProvider, Program } from '@coral-xyz/anchor'
-import { PublicKey } from '@solana/web3.js'
+import { PublicKey, Keypair } from '@solana/web3.js'
 import idl from '../lib/idl.json'
 import { PROGRAM_ID, VAULT_SEED, FLIP_SEED, STATS_SEED } from '../lib/constants'
-import type { Flipordrain } from '../../../target/types/flipordrain'
+
+// Local type declaration — avoids importing from gitignored target/types/
+type Flipordrain = any
+
+// Dummy wallet for read-only provider (fetching vault data without connected wallet)
+const dummyWallet = {
+  publicKey: Keypair.generate().publicKey,
+  signTransaction: () => Promise.reject(),
+  signAllTransactions: () => Promise.reject(),
+}
 
 export function useProgram() {
   const { connection } = useConnection()
   const wallet = useAnchorWallet()
 
   const provider = useMemo(() => {
-    if (!wallet) return null
-    return new AnchorProvider(connection, wallet, {
+    return new AnchorProvider(connection, wallet ?? dummyWallet as any, {
       commitment: 'confirmed',
     })
   }, [connection, wallet])
 
   const program = useMemo(() => {
-    if (!provider) return null
     return new Program(idl as any, provider) as unknown as Program<Flipordrain>
   }, [provider])
 
