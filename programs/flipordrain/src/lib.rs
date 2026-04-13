@@ -1,3 +1,5 @@
+//! FlipOrDrain — on-chain coin flip with verifiable randomness.
+
 use anchor_lang::prelude::*;
 
 declare_id!("2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3");

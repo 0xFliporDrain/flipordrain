@@ -1,35 +1,28 @@
-import { useMemo } from 'react'
+import { useRef, useCallback } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { AnchorProvider, Program } from '@coral-xyz/anchor'
 import { PublicKey, Keypair } from '@solana/web3.js'
 import idl from '../lib/idl.json'
 import { PROGRAM_ID, VAULT_SEED, FLIP_SEED, STATS_SEED } from '../lib/constants'
 
-// Local type declaration — avoids importing from gitignored target/types/
-type Flipordrain = any
+type FlipProgram = any
 
-// Dummy wallet for read-only provider (fetching vault data without connected wallet)
-const dummyWallet = {
-  publicKey: Keypair.generate().publicKey,
-  signTransaction: () => Promise.reject(),
-  signAllTransactions: () => Promise.reject(),
-}
+const readonlyKp = Keypair.generate()
 
-export function useProgram() {
+export function useFlipProgram() {
   const { connection } = useConnection()
-  const wallet = useAnchorWallet()
+  const w = useAnchorWallet()
+  const progRef = useRef<Program<FlipProgram> | null>(null)
+  const provRef = useRef<AnchorProvider | null>(null)
 
-  const provider = useMemo(() => {
-    return new AnchorProvider(connection, wallet ?? dummyWallet as any, {
-      commitment: 'confirmed',
-    })
-  }, [connection, wallet])
+  const get = useCallback(() => {
+    const signer = w ?? { publicKey: readonlyKp.publicKey, signTransaction: () => Promise.reject(), signAllTransactions: () => Promise.reject() }
+    provRef.current = new AnchorProvider(connection, signer as any, { preflightCommitment: 'confirmed' })
+    progRef.current = new Program(idl as any, provRef.current) as unknown as Program<FlipProgram>
+    return { prog: progRef.current, prov: provRef.current }
+  }, [connection, w])
 
-  const program = useMemo(() => {
-    return new Program(idl as any, provider) as unknown as Program<Flipordrain>
-  }, [provider])
-
-  return { program, provider, connection }
+  return { get, connection, connected: !!w }
 }
 
 export function getVaultPda() {

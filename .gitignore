@@ -7,8 +7,3 @@ target/
 test-ledger/
 .DS_Store
 *.swp
-.vercel
-WORKLOG.md
-REVIEWS.md
-REFERENCES.md
-deploy-keypair.json

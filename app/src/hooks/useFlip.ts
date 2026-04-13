@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
-import { useProgram, getVaultPda, getFlipPda, getStatsPda } from './useProgram'
+import { useFlipProgram, getVaultPda, getFlipPda, getStatsPda } from './useProgram'
 
 export type FlipState = 'idle' | 'placing' | 'waiting' | 'won' | 'lost'
 
@@ -68,7 +68,7 @@ function saveHistory(records: FlipRecord[]) {
 
 export function useFlip() {
   const { publicKey } = useWallet()
-  const { program, connection } = useProgram()
+  const { get, connection, connected } = useFlipProgram()
   const [state, setState] = useState<FlipState>('idle')
   const [result, setResult] = useState<FlipResult | null>(null)
   const [vault, setVault] = useState<VaultInfo | null>(null)
@@ -104,10 +104,10 @@ export function useFlip() {
 
   // fetch vault info
   const refreshVault = useCallback(async () => {
-    if (!program) return
     try {
+      const { prog } = get()
       const [vaultPda] = getVaultPda()
-      const v = await program.account.flipVault.fetch(vaultPda)
+      const v = await prog.account.flipVault.fetch(vaultPda)
       setVault({
         balance: v.balance.toNumber() / LAMPORTS_PER_SOL,
         totalFlips: v.totalFlips.toNumber(),
@@ -119,14 +119,15 @@ export function useFlip() {
     } catch {
       setVault(null)
     }
-  }, [program])
+  }, [get])
 
   // fetch player stats
   const refreshStats = useCallback(async () => {
-    if (!program || !publicKey) return
+    if (!publicKey) return
     try {
+      const { prog } = get()
       const [statsPda] = getStatsPda(publicKey)
-      const s = await program.account.playerStats.fetch(statsPda)
+      const s = await prog.account.playerStats.fetch(statsPda)
       setStats({
         totalFlips: s.totalFlips.toNumber(),
         totalWon: s.totalWon.toNumber() / LAMPORTS_PER_SOL,
@@ -138,7 +139,7 @@ export function useFlip() {
     } catch {
       setStats(null)
     }
-  }, [program, publicKey])
+  }, [get, publicKey])
 
   // fetch SOL balance
   const refreshBalance = useCallback(async () => {
@@ -169,9 +170,9 @@ export function useFlip() {
       clearPolling()
 
       pollRef.current = setInterval(async () => {
-        if (!program) { clearPolling(); return }
         try {
-          const flip = await program.account.flipGame.fetch(flipPda)
+          const { prog } = get()
+          const flip = await prog.account.flipGame.fetch(flipPda)
           if (flip.result !== null) {
             clearPolling()
             const won = flip.result === true
@@ -218,27 +219,28 @@ export function useFlip() {
         setResult(null)
       }, VRF_TIMEOUT_MS)
     },
-    [program, connection, clearPolling, addToHistory, refreshVault, refreshStats, refreshBalance]
+    [get, connection, clearPolling, addToHistory, refreshVault, refreshStats, refreshBalance]
   )
 
   // place flip
   const placeFlip = useCallback(
     async (amountSol: number) => {
-      if (!program || !publicKey || !vault) return
+      if (!connected || !publicKey || !vault) return
       setState('placing')
       setResult(null)
       setError(null)
 
       try {
+        const { prog } = get()
         const amount = new BN(Math.floor(amountSol * LAMPORTS_PER_SOL))
         const [vaultPda] = getVaultPda()
         // Fetch fresh vault to get current totalFlips (avoids stale PDA race condition)
-        const freshVault = await program.account.flipVault.fetch(vaultPda)
+        const freshVault = await prog.account.flipVault.fetch(vaultPda)
         const currentFlips = freshVault.totalFlips.toNumber()
         const [flipPda] = getFlipPda(publicKey, currentFlips)
         const [statsPda] = getStatsPda(publicKey)
 
-        await program.methods
+        await prog.methods
           .placeFlip(amount)
           .accountsPartial({
             vault: vaultPda,
@@ -266,19 +268,20 @@ export function useFlip() {
         }
       }
     },
-    [program, publicKey, vault, pollForResult, clearPolling]
+    [get, connected, publicKey, vault, pollForResult, clearPolling]
   )
 
   // claim winnings
   const claimWinnings = useCallback(
     async (flipPda: PublicKey) => {
-      if (!program || !publicKey) return
+      if (!connected || !publicKey) return
       setError(null)
 
       try {
+        const { prog } = get()
         const [vaultPda] = getVaultPda()
 
-        await program.methods
+        await prog.methods
           .claimWinnings()
           .accountsPartial({
             vault: vaultPda,
@@ -302,22 +305,23 @@ export function useFlip() {
         }
       }
     },
-    [program, publicKey, refreshVault, refreshStats, refreshBalance]
+    [get, connected, publicKey, refreshVault, refreshStats, refreshBalance]
   )
 
   // double or nothing
   const doubleOrNothing = useCallback(
     async (prevFlipPda: PublicKey) => {
-      if (!program || !publicKey || !vault) return
+      if (!connected || !publicKey || !vault) return
       setState('placing')
       setError(null)
 
       try {
+        const { prog } = get()
         const [vaultPda] = getVaultPda()
-        const freshVault = await program.account.flipVault.fetch(vaultPda)
+        const freshVault = await prog.account.flipVault.fetch(vaultPda)
         const [newFlipPda] = getFlipPda(publicKey, freshVault.totalFlips.toNumber())
 
-        await program.methods
+        await prog.methods
           .doubleOrNothing()
           .accountsPartial({
             vault: vaultPda,
@@ -349,7 +353,7 @@ export function useFlip() {
         }
       }
     },
-    [program, publicKey, vault, result, pollForResult, clearPolling]
+    [get, connected, publicKey, vault, result, pollForResult, clearPolling]
   )
 
   const reset = useCallback(() => {
