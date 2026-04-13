@@ -15,11 +15,11 @@ export function useFlipProgram() {
   const progRef = useRef<Program<FlipProgram> | null>(null)
   const provRef = useRef<AnchorProvider | null>(null)
 
-  const get = useCallback(() => {
+  const get = useCallback((): { prog: any; prov: AnchorProvider } => {
     const signer = w ?? { publicKey: readonlyKp.publicKey, signTransaction: () => Promise.reject(), signAllTransactions: () => Promise.reject() }
     provRef.current = new AnchorProvider(connection, signer as any, { preflightCommitment: 'confirmed' })
-    progRef.current = new Program(idl as any, provRef.current) as unknown as Program<FlipProgram>
-    return { prog: progRef.current, prov: provRef.current }
+    progRef.current = new Program(idl as any, provRef.current)
+    return { prog: progRef.current as any, prov: provRef.current }
   }, [connection, w])
 
   return { get, connection, connected: !!w }
