@@ -7,3 +7,8 @@ target/
 test-ledger/
 .DS_Store
 *.swp
+WORKLOG.md
+REVIEWS.md
+REFERENCES.md
+deploy-keypair.json
+*-keypair.json

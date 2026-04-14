@@ -39,6 +39,18 @@ export default function App() {
 
   const { feed, leaders, connected: wsConnected, addRealFlip } = useSocket()
 
+  const resultRef = useRef(result)
+  useEffect(() => { resultRef.current = result }, [result])
+
+  const pkRef = useRef(publicKey)
+  useEffect(() => { pkRef.current = publicKey }, [publicKey])
+
+  const statsRef = useRef(stats)
+  useEffect(() => { statsRef.current = stats }, [stats])
+
+  const addRealFlipRef = useRef(addRealFlip)
+  useEffect(() => { addRealFlipRef.current = addRealFlip }, [addRealFlip])
+
   useEffect(() => {
     if (prevState.current === 'waiting' && state === 'won') {
       setFx('win')
@@ -49,13 +61,15 @@ export default function App() {
       setTimeout(() => setFx(null), 600)
     }
     // inject real flip into live feed
-    if ((prevState.current === 'waiting') && (state === 'won' || state === 'lost') && result && publicKey) {
-      addRealFlip({
-        player: publicKey.toBase58(),
-        amt: result.amount * 1e9,
-        won: result.won,
-        payout: result.won ? result.payout * 1e9 : 0,
-        streak: stats?.currentStreak || 0,
+    const r = resultRef.current
+    const pk = pkRef.current
+    if ((prevState.current === 'waiting') && (state === 'won' || state === 'lost') && r && pk) {
+      addRealFlipRef.current({
+        player: pk.toBase58(),
+        amt: r.amount * 1e9,
+        won: r.won,
+        payout: r.won ? r.payout * 1e9 : 0,
+        streak: statsRef.current?.currentStreak || 0,
         tx: '',
         ts: Date.now(),
       })

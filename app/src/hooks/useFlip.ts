@@ -192,7 +192,7 @@ export function useFlip() {
             const acct = await connection.getAccountInfo(flipPda)
             if (!acct) {
               clearPolling()
-              setResult({ won: false, amount: betAmount, payout: betAmount, flipPda, canDouble: false })
+              setResult({ won: false, amount: betAmount, payout: 0, flipPda, canDouble: false })
               setState('lost')
               addToHistory({ won: false, amount: betAmount, payout: 0, ts: Date.now(), isDouble })
               refreshVault()
@@ -260,7 +260,7 @@ export function useFlip() {
 
       try {
         const { prog } = get()
-        const amount = new BN(Math.floor(amountSol * LAMPORTS_PER_SOL))
+        const amount = new BN(Math.round(amountSol * LAMPORTS_PER_SOL))
         const [vaultPda] = getVaultPda()
         const freshVault = await prog.account.flipVault.fetch(vaultPda)
         const currentFlips = freshVault.totalFlips.toNumber()
@@ -295,7 +295,7 @@ export function useFlip() {
 
         // confirm in background — if it fails, polling will catch the result anyway
         connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
-          .catch(() => { /* polling handles it */ })
+          .catch((e) => console.warn('confirm bg:', e?.message?.slice(0, 60)))
 
       } catch (e: any) {
         console.error('flip error:', e)
@@ -339,10 +339,11 @@ export function useFlip() {
   // helper: send tx without blocking on confirmation
   const sendFast = useCallback(
     async (tx: any) => {
+      if (!publicKey) throw new Error('wallet disconnected')
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
       tx.recentBlockhash = blockhash
       tx.lastValidBlockHeight = lastValidBlockHeight
-      tx.feePayer = publicKey!
+      tx.feePayer = publicKey
 
       const { prog } = get()
       const signed = await prog.provider.wallet.signTransaction(tx)
@@ -351,7 +352,7 @@ export function useFlip() {
 
       // confirm in bg — don't block ui
       connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
-        .catch(() => {})
+        .catch((e) => console.warn('confirm bg:', e?.message?.slice(0, 60)))
 
       return sig
     },
@@ -424,7 +425,6 @@ export function useFlip() {
       setError(null)
 
       let newFlipPda: PublicKey | null = null
-      let prevPayout = 0
 
       try {
         const { prog } = get()
@@ -446,13 +446,9 @@ export function useFlip() {
         await sendFast(tx)
 
         setState('waiting')
-        setResult((prev) => {
-          if (prev) {
-            prevPayout = prev.payout
-            pollForResult(newFlipPda!, prev.payout, true)
-          }
-          return prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null
-        })
+        const prevPayout = result?.payout || 0
+        if (newFlipPda) pollForResult(newFlipPda, prevPayout, true)
+        setResult((prev) => prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null)
       } catch (e: any) {
         console.error('double error:', e)
 
@@ -462,10 +458,9 @@ export function useFlip() {
         if (newFlipPda && (msg.includes('not confirmed') || msg.includes('timeout') || msg.includes('already processed'))) {
           console.log('double tx may have landed — polling')
           setState('waiting')
-          setResult((prev) => {
-            if (prev) pollForResult(newFlipPda!, prev.payout, true)
-            return prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null
-          })
+          const prevPayout = result?.payout || 0
+          if (newFlipPda) pollForResult(newFlipPda, prevPayout, true)
+          setResult((prev) => prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null)
           return
         }
 

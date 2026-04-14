@@ -114,7 +114,7 @@ export function useSocket() {
     socketRef.current = sock
 
     sock.on('connect', () => setConnected(true))
-    sock.on('disconnect', () => setConnected(true)) // keep "live" look
+    sock.on('disconnect', () => setConnected(false))
 
     sock.on('recent', (flips: LiveFlip[]) => {
       setFeed((prev) => [...flips, ...prev].slice(0, 30))
