@@ -38,6 +38,9 @@ export default function Header({ balance, stats, loading, connecting }: Props) {
             )}
           </div>
         ) : null}
+        <a href="https://faucet.solana.com/" target="_blank" rel="noopener noreferrer" className="faucet-btn">
+          GET SOL
+        </a>
         <WalletMultiButton />
       </div>
     </header>
