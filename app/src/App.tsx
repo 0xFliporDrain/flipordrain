@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import Header from './components/Header'
 import FlipCard from './components/FlipCard'
@@ -15,8 +15,11 @@ import { useSocket } from './hooks/useSocket'
 type Tab = 'play' | 'history'
 
 export default function App() {
-  const { connected, connecting } = useWallet()
+  const { connected, connecting, publicKey } = useWallet()
   const [tab, setTab] = useState<Tab>('play')
+  const [fx, setFx] = useState<'win' | 'lose' | null>(null)
+  const prevState = useRef<string>('idle')
+  const lastDemoAmt = useRef(0.25)
   const {
     state,
     result,
@@ -27,95 +30,144 @@ export default function App() {
     error,
     history,
     placeFlip,
+    demoFlip,
     claimWinnings,
     doubleOrNothing,
     reset,
     dismissError,
   } = useFlip()
 
-  const { feed, leaders, connected: wsConnected } = useSocket()
+  const { feed, leaders, connected: wsConnected, addRealFlip } = useSocket()
+
+  useEffect(() => {
+    if (prevState.current === 'waiting' && state === 'won') {
+      setFx('win')
+      setTimeout(() => setFx(null), 2500)
+    }
+    if (prevState.current === 'waiting' && state === 'lost') {
+      setFx('lose')
+      setTimeout(() => setFx(null), 600)
+    }
+    // inject real flip into live feed
+    if ((prevState.current === 'waiting') && (state === 'won' || state === 'lost') && result && publicKey) {
+      addRealFlip({
+        player: publicKey.toBase58(),
+        amt: result.amount * 1e9,
+        won: result.won,
+        payout: result.won ? result.payout * 1e9 : 0,
+        streak: stats?.currentStreak || 0,
+        tx: '',
+        ts: Date.now(),
+      })
+    }
+    prevState.current = state
+  }, [state])
 
   return (
-    <div className="app">
-      <Header balance={balance} stats={stats} loading={loading} connecting={connecting} />
+    <>
+      <div className="particles">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="particle" />
+        ))}
+      </div>
 
-      <nav className="tabs">
-        <button
-          className={`tab ${tab === 'play' ? 'active' : ''}`}
-          onClick={() => setTab('play')}
-        >
-          play
-        </button>
-        <button
-          className={`tab ${tab === 'history' ? 'active' : ''}`}
-          onClick={() => setTab('history')}
-        >
-          history
-          {history.length > 0 && <span className="tab-count">{history.length}</span>}
-        </button>
-      </nav>
+      {fx === 'win' && (
+        <>
+          <div className="win-flash" />
+          <div className="confetti-wrap">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="confetti" />
+            ))}
+          </div>
+        </>
+      )}
+      {fx === 'lose' && <div className="lose-flash" />}
 
-      <main className="main">
-        {tab === 'play' ? (
-          <>
-            {loading && !vault ? (
-              <section className="play-area">
-                <div className="loader-wrap">
-                  <div className="loader-ring" />
-                  <p className="loader-text">loading vault...</p>
-                </div>
-              </section>
-            ) : connecting ? (
-              <section className="play-area">
-                <div className="loader-wrap">
-                  <div className="loader-ring" />
-                  <p className="loader-text">connecting wallet...</p>
-                </div>
-              </section>
-            ) : (
-              <section className="play-area">
-                <CoinFlip state={state} />
+      <div className={`app ${fx === 'lose' ? 'screen-shake' : ''}`}>
+        <Header balance={balance} stats={stats} loading={loading} connecting={connecting} />
 
-                {(state === 'idle' || state === 'placing') && (
-                  <FlipCard
+        <nav className="tabs">
+          <button
+            className={`tab ${tab === 'play' ? 'active' : ''}`}
+            onClick={() => setTab('play')}
+          >
+            play
+          </button>
+          <button
+            className={`tab ${tab === 'history' ? 'active' : ''}`}
+            onClick={() => setTab('history')}
+          >
+            history
+            {history.length > 0 && <span className="tab-count">{history.length}</span>}
+          </button>
+        </nav>
+
+        <main className="main">
+          {tab === 'play' ? (
+            <div className="tab-content" key="play">
+              {loading && !vault ? (
+                <section className="play-area">
+                  <div className="loader-wrap">
+                    <div className="loader-ring" />
+                    <p className="loader-text">loading vault...</p>
+                  </div>
+                </section>
+              ) : connecting ? (
+                <section className="play-area">
+                  <div className="loader-wrap">
+                    <div className="loader-ring" />
+                    <p className="loader-text">connecting wallet...</p>
+                  </div>
+                </section>
+              ) : (
+                <section className="play-area">
+                  <CoinFlip state={state} />
+
+                  {(state === 'idle' || state === 'placing') && (
+                    <FlipCard
+                      state={state}
+                      vault={vault}
+                      balance={balance}
+                      onFlip={placeFlip}
+                      onDemo={(amt) => { lastDemoAmt.current = amt; demoFlip(amt) }}
+                    />
+                  )}
+
+                  <ResultPanel
                     state={state}
-                    vault={vault}
-                    balance={balance}
-                    onFlip={placeFlip}
+                    result={result}
+                    onClaim={() => result && claimWinnings(result.flipPda)}
+                    onDouble={() => result && doubleOrNothing(result.flipPda)}
+                    onReset={reset}
+                    onDemoAgain={() => { reset(); setTimeout(() => demoFlip(lastDemoAmt.current), 50) }}
                   />
-                )}
+                </section>
+              )}
 
-                <ResultPanel
-                  state={state}
-                  result={result}
-                  onClaim={() => result && claimWinnings(result.flipPda)}
-                  onDouble={() => result && doubleOrNothing(result.flipPda)}
-                  onReset={reset}
-                />
+              <StatsBar stats={stats} vault={vault} loading={loading && connected} />
+
+              <section className="bottom-grid">
+                <LiveFeed feed={feed} connected={wsConnected} />
+                <Leaderboard leaders={leaders} />
               </section>
-            )}
+            </div>
+          ) : (
+            <div className="tab-content" key="history">
+              <TransactionHistory history={history} />
+            </div>
+          )}
+        </main>
 
-            <StatsBar stats={stats} loading={loading && connected} />
+        {error && <ErrorToast error={error} onDismiss={dismissError} />}
 
-            <section className="bottom-grid">
-              <LiveFeed feed={feed} connected={wsConnected} />
-              <Leaderboard leaders={leaders} />
-            </section>
-          </>
-        ) : (
-          <TransactionHistory history={history} />
-        )}
-      </main>
-
-      {error && <ErrorToast error={error} onDismiss={dismissError} />}
-
-      <footer className="ftr">
-        <span>on-chain coin flip</span>
-        <span className="ftr-sep">|</span>
-        <span>solana devnet</span>
-        <span className="ftr-sep">|</span>
-        <span>1.9x payout</span>
-      </footer>
-    </div>
+        <footer className="ftr">
+          <span>on-chain coin flip</span>
+          <span className="ftr-sep">|</span>
+          <span>solana devnet</span>
+          <span className="ftr-sep">|</span>
+          <span>1.9x payout</span>
+        </footer>
+      </div>
+    </>
   )
 }
