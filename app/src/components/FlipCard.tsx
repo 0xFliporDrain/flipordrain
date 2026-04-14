@@ -8,9 +8,10 @@ type Props = {
   vault: VaultInfo | null
   balance: number
   onFlip: (amount: number) => void
+  onDemo: (amount: number) => void
 }
 
-export default function FlipCard({ state, vault, balance, onFlip }: Props) {
+export default function FlipCard({ state, vault, balance, onFlip, onDemo }: Props) {
   const { connected } = useWallet()
   const [amount, setAmount] = useState(0.1)
   const [err, setErr] = useState('')
@@ -92,17 +93,17 @@ export default function FlipCard({ state, vault, balance, onFlip }: Props) {
               : 'FLIP'}
           </button>
         )}
+        <button
+          className="demo-btn"
+          onClick={() => onDemo(amount)}
+          disabled={busy}
+        >
+          DEMO FLIP
+        </button>
 
         {err && <p className="flip-err">{err}</p>}
       </div>
 
-      {vault && (
-        <div className="vault-bar">
-          <span>vault: {vault.balance.toFixed(2)} SOL</span>
-          <span>flips: {vault.totalFlips.toLocaleString()}</span>
-          <span>volume: {vault.totalVolume.toFixed(1)} SOL</span>
-        </div>
-      )}
     </div>
   )
 }

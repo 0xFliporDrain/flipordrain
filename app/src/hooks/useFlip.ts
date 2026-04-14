@@ -222,6 +222,32 @@ export function useFlip() {
     [get, connection, clearPolling, addToHistory, refreshVault, refreshStats, refreshBalance]
   )
 
+  // demo flip — local only, no on-chain tx
+  const demoFlip = useCallback(
+    (amountSol: number) => {
+      setState('placing')
+      setResult(null)
+      setError(null)
+
+      setTimeout(() => {
+        setState('waiting')
+        setTimeout(() => {
+          const won = Math.random() < 0.5
+          const payout = won ? amountSol * 1.9 : amountSol
+          setResult({
+            won,
+            amount: amountSol,
+            payout,
+            flipPda: PublicKey.default,
+            canDouble: won,
+          })
+          setState(won ? 'won' : 'lost')
+        }, 1500 + Math.random() * 1000)
+      }, 500)
+    },
+    []
+  )
+
   // place flip
   const placeFlip = useCallback(
     async (amountSol: number) => {
@@ -230,17 +256,19 @@ export function useFlip() {
       setResult(null)
       setError(null)
 
+      let flipPda: PublicKey | null = null
+
       try {
         const { prog } = get()
         const amount = new BN(Math.floor(amountSol * LAMPORTS_PER_SOL))
         const [vaultPda] = getVaultPda()
-        // Fetch fresh vault to get current totalFlips (avoids stale PDA race condition)
         const freshVault = await prog.account.flipVault.fetch(vaultPda)
         const currentFlips = freshVault.totalFlips.toNumber()
-        const [flipPda] = getFlipPda(publicKey, currentFlips)
+        ;[flipPda] = getFlipPda(publicKey, currentFlips)
         const [statsPda] = getStatsPda(publicKey)
 
-        await prog.methods
+        // build tx with fresh blockhash to avoid "already processed"
+        const tx = await prog.methods
           .placeFlip(amount)
           .accountsPartial({
             vault: vaultPda,
@@ -249,26 +277,85 @@ export function useFlip() {
             player: publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .rpc()
+          .transaction()
 
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
+        tx.recentBlockhash = blockhash
+        tx.lastValidBlockHeight = lastValidBlockHeight
+        tx.feePayer = publicKey
+
+        // send without waiting for full confirmation — devnet is slow
+        const signed = await prog.provider.wallet.signTransaction(tx)
+        const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true })
+        console.log('flip sent:', sig)
+
+        // start polling immediately — don't wait for confirmTransaction
         setState('waiting')
         pollForResult(flipPda, amountSol, false)
+
+        // confirm in background — if it fails, polling will catch the result anyway
+        connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
+          .catch(() => { /* polling handles it */ })
+
       } catch (e: any) {
         console.error('flip error:', e)
+
+        const msg = e?.message || String(e)
+
+        // if tx was sent but confirmation timed out — still poll
+        if (flipPda && (msg.includes('not confirmed') || msg.includes('timeout') || msg.includes('Timed out'))) {
+          console.log('confirmation timed out but tx may have landed — polling')
+          setState('waiting')
+          pollForResult(flipPda, amountSol, false)
+          return
+        }
+
+        // if tx already processed — it went through before, refresh and poll
+        if (flipPda && (msg.includes('already been processed') || msg.includes('already processed'))) {
+          console.log('tx already processed — polling for result')
+          setState('waiting')
+          pollForResult(flipPda, amountSol, false)
+          refreshVault()
+          refreshStats()
+          refreshBalance()
+          return
+        }
+
         clearPolling()
         setState('idle')
 
-        const msg = e?.message || String(e)
         if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
           setError({ type: 'tx_rejected', message: 'Transaction was rejected.' })
-        } else if (msg.includes('blockhash') || msg.includes('timeout')) {
+        } else if (msg.includes('blockhash')) {
           setError({ type: 'network', message: 'Network error — try again.' })
         } else {
           setError({ type: 'unknown', message: msg.slice(0, 120) })
         }
       }
     },
-    [get, connected, publicKey, vault, pollForResult, clearPolling]
+    [get, connection, connected, publicKey, vault, pollForResult, clearPolling, refreshVault, refreshStats, refreshBalance]
+  )
+
+  // helper: send tx without blocking on confirmation
+  const sendFast = useCallback(
+    async (tx: any) => {
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
+      tx.recentBlockhash = blockhash
+      tx.lastValidBlockHeight = lastValidBlockHeight
+      tx.feePayer = publicKey!
+
+      const { prog } = get()
+      const signed = await prog.provider.wallet.signTransaction(tx)
+      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true })
+      console.log('tx sent:', sig)
+
+      // confirm in bg — don't block ui
+      connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
+        .catch(() => {})
+
+      return sig
+    },
+    [connection, publicKey, get]
   )
 
   // claim winnings
@@ -278,10 +365,22 @@ export function useFlip() {
       setError(null)
 
       try {
+        // check if flip account still exists before trying to claim
+        const acct = await connection.getAccountInfo(flipPda)
+        if (!acct) {
+          // flip was already claimed or double lost — just reset
+          setResult(null)
+          setState('idle')
+          refreshVault()
+          refreshStats()
+          refreshBalance()
+          return
+        }
+
         const { prog } = get()
         const [vaultPda] = getVaultPda()
 
-        await prog.methods
+        const tx = await prog.methods
           .claimWinnings()
           .accountsPartial({
             vault: vaultPda,
@@ -289,23 +388,32 @@ export function useFlip() {
             player: publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .rpc()
+          .transaction()
+
+        await sendFast(tx)
 
         setResult(null)
         setState('idle')
-        refreshVault()
-        refreshStats()
-        refreshBalance()
+        setTimeout(() => { refreshVault(); refreshStats(); refreshBalance() }, 2000)
       } catch (e: any) {
         const msg = e?.message || String(e)
         if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
           setError({ type: 'tx_rejected', message: 'Claim rejected.' })
+        } else if (msg.includes('not confirmed') || msg.includes('timeout')) {
+          setResult(null)
+          setState('idle')
+          setTimeout(() => { refreshVault(); refreshStats(); refreshBalance() }, 2000)
+        } else if (msg.includes('AccountNotInitialized') || msg.includes('not found')) {
+          // flip account closed — was already claimed or double resulted in loss
+          setResult(null)
+          setState('idle')
+          refreshBalance()
         } else {
           setError({ type: 'unknown', message: 'Failed to claim: ' + msg.slice(0, 80) })
         }
       }
     },
-    [get, connected, publicKey, refreshVault, refreshStats, refreshBalance]
+    [get, connection, connected, publicKey, sendFast, refreshVault, refreshStats, refreshBalance]
   )
 
   // double or nothing
@@ -315,13 +423,16 @@ export function useFlip() {
       setState('placing')
       setError(null)
 
+      let newFlipPda: PublicKey | null = null
+      let prevPayout = 0
+
       try {
         const { prog } = get()
         const [vaultPda] = getVaultPda()
         const freshVault = await prog.account.flipVault.fetch(vaultPda)
-        const [newFlipPda] = getFlipPda(publicKey, freshVault.totalFlips.toNumber())
+        ;[newFlipPda] = getFlipPda(publicKey, freshVault.totalFlips.toNumber())
 
-        await prog.methods
+        const tx = await prog.methods
           .doubleOrNothing()
           .accountsPartial({
             vault: vaultPda,
@@ -330,22 +441,37 @@ export function useFlip() {
             player: publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .rpc()
+          .transaction()
+
+        await sendFast(tx)
 
         setState('waiting')
         setResult((prev) => {
-          // capture payout from functional update to avoid stale closure
           if (prev) {
-            pollForResult(newFlipPda, prev.payout, true)
+            prevPayout = prev.payout
+            pollForResult(newFlipPda!, prev.payout, true)
           }
-          return prev ? { ...prev, flipPda: newFlipPda, canDouble: false } : null
+          return prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null
         })
       } catch (e: any) {
         console.error('double error:', e)
+
+        const msg = e?.message || String(e)
+
+        // timeout or already processed — tx probably went through, poll anyway
+        if (newFlipPda && (msg.includes('not confirmed') || msg.includes('timeout') || msg.includes('already processed'))) {
+          console.log('double tx may have landed — polling')
+          setState('waiting')
+          setResult((prev) => {
+            if (prev) pollForResult(newFlipPda!, prev.payout, true)
+            return prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null
+          })
+          return
+        }
+
         clearPolling()
         setState(result?.won ? 'won' : 'idle')
 
-        const msg = e?.message || String(e)
         if (msg.includes('User rejected') || msg.includes('Transaction cancelled')) {
           setError({ type: 'tx_rejected', message: 'Double rejected.' })
         } else {
@@ -353,7 +479,7 @@ export function useFlip() {
         }
       }
     },
-    [get, connected, publicKey, vault, result, pollForResult, clearPolling]
+    [get, connection, connected, publicKey, vault, result, pollForResult, clearPolling, sendFast]
   )
 
   const reset = useCallback(() => {
@@ -375,6 +501,7 @@ export function useFlip() {
     error,
     history,
     placeFlip,
+    demoFlip,
     claimWinnings,
     doubleOrNothing,
     reset,
