@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-use crate::constants::{FLIP_SEED, STATS_SEED, VAULT_SEED, PAYOUT_MULTIPLIER_BPS};
+use crate::{FLIP_SEED, STATS_SEED, VAULT_SEED, PAYOUT_MULTIPLIER_BPS};
 use crate::errors::FlipError;
 use crate::state::{FlipGame, FlipVault, PlayerStats};
 

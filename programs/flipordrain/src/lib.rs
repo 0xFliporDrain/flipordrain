@@ -4,10 +4,17 @@ use anchor_lang::prelude::*;
 
 declare_id!("2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3");
 
+// PDA seeds + house params live at the crate root — tiny, not worth a file.
+pub const VAULT_SEED: &[u8] = b"vault";
+pub const FLIP_SEED: &[u8] = b"flip";
+pub const STATS_SEED: &[u8] = b"stats";
+pub const MAX_STREAK: u8 = 15;
+pub const DEFAULT_HOUSE_EDGE_BPS: u16 = 500;      // 5%
+pub const PAYOUT_MULTIPLIER_BPS: u16 = 19000;     // 1.9x
+
 pub mod instructions;
 pub mod state;
 pub mod errors;
-pub mod constants;
 
 use instructions::*;
 

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use crate::state::FlipVault;
 use crate::errors::FlipError;
-use crate::constants::VAULT_SEED;
+use crate::VAULT_SEED;
 
 #[derive(Accounts)]
 pub struct FundVault<'info> {

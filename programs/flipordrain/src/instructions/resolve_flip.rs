@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{STATS_SEED, VAULT_SEED};
+use crate::{STATS_SEED, VAULT_SEED};
 use crate::errors::FlipError;
 use crate::state::{FlipGame, FlipVault, PlayerStats};
 

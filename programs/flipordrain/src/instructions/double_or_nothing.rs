@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{FLIP_SEED, MAX_STREAK, PAYOUT_MULTIPLIER_BPS, VAULT_SEED};
+use crate::{FLIP_SEED, MAX_STREAK, PAYOUT_MULTIPLIER_BPS, VAULT_SEED};
 use crate::errors::FlipError;
 use crate::state::{FlipGame, FlipVault};
 
