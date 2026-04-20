@@ -8,8 +8,8 @@ type Props = {
 
 function shortAddr(addr: string) {
   if (!addr || addr.length < 8) return addr || '???'
-  if (addr.includes('...')) return addr
-  return addr.slice(0, 4) + '...' + addr.slice(-4)
+  if (addr.includes('…') || addr.includes('...')) return addr
+  return `${addr.slice(0, 5)}…${addr.slice(-4)}`
 }
 
 function timeAgo(ts: number, now: number) {
