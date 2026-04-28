@@ -5,7 +5,7 @@ type State = { err: Error | null }
 
 // last-resort guard against runtime crashes in any subtree.
 // without it a thrown error in (say) <LiveFeed/> blanks the whole app.
-export default class ErrorBoundary extends Component<Props, State> {
+export default class CrashGuard extends Component<Props, State> {
   state: State = { err: null }
 
   static getDerivedStateFromError(err: Error): State {
@@ -14,7 +14,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(err: Error, info: ErrorInfo) {
     // surface to console; remote logging is out of scope for now.
-    console.error('[boundary] caught', err, info.componentStack)
+    console.error('[crash-guard] caught', err, info.componentStack)
   }
 
   reload = () => {
