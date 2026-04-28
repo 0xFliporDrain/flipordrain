@@ -1846,3 +1846,75 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .tx-empty-coin { animation: none; }
 }
+
+/* ═══ ERROR BOUNDARY ═══ */
+.boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 30%, #15101a, #06080d 80%);
+}
+.boundary-card {
+  max-width: 480px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 95, 122, 0.35);
+  border-radius: 12px;
+  padding: 28px 28px 24px;
+  box-shadow: 0 0 50px rgba(255, 95, 122, 0.12);
+}
+.boundary-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ff5f7a;
+  margin: 0 0 8px;
+}
+.boundary-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  color: #f4f4f6;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.boundary-msg {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #b4bac6;
+  margin: 0 0 16px;
+}
+.boundary-stack {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 18px;
+  color: #ff8aa0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 140px;
+  overflow: auto;
+}
+.boundary-btn {
+  background: linear-gradient(180deg, #00ff88, #00b864);
+  border: 0;
+  color: #06080d;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter 140ms ease;
+}
+.boundary-btn:hover { filter: brightness(1.08); }
+.boundary-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

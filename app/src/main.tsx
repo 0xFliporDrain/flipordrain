@@ -11,6 +11,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets'
 import { RPC_URL } from './lib/constants'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 import '@solana/wallet-adapter-react-ui/styles.css'
 
@@ -28,8 +29,10 @@ function Providers({ children }: { children: React.ReactNode }) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Providers>
-      <App />
-    </Providers>
+    <ErrorBoundary>
+      <Providers>
+        <App />
+      </Providers>
+    </ErrorBoundary>
   </StrictMode>
 )
