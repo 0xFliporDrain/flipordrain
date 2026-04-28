@@ -1703,3 +1703,60 @@ body::after {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* ═══ STREAK METER ═══ */
+.streak-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  background: rgba(255, 140, 0, 0.08);
+  border: 1px solid rgba(255, 140, 0, 0.25);
+  color: #ffb070;
+  white-space: nowrap;
+}
+.streak-icon { font-size: 13px; line-height: 1; }
+.streak-num {
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffd09a;
+}
+.streak-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.streak-meter.tier-spark {
+  background: rgba(0, 200, 255, 0.06);
+  border-color: rgba(0, 200, 255, 0.2);
+  color: #6dd5ff;
+}
+.streak-meter.tier-spark .streak-num { color: #c5edff; }
+.streak-meter.tier-hot {
+  background: rgba(255, 140, 0, 0.12);
+  border-color: rgba(255, 140, 0, 0.4);
+  box-shadow: 0 0 14px rgba(255, 140, 0, 0.18);
+}
+.streak-meter.tier-blaze {
+  background: rgba(255, 90, 60, 0.16);
+  border-color: rgba(255, 90, 60, 0.55);
+  color: #ffba99;
+  box-shadow: 0 0 18px rgba(255, 90, 60, 0.3);
+  animation: streak-pulse 1.4s ease-in-out infinite;
+}
+.streak-meter.tier-inferno {
+  background: linear-gradient(90deg, rgba(255, 60, 60, 0.2), rgba(255, 200, 0, 0.2));
+  border-color: rgba(255, 60, 60, 0.7);
+  color: #ffe2c4;
+  box-shadow: 0 0 22px rgba(255, 60, 60, 0.45);
+  animation: streak-pulse 1s ease-in-out infinite;
+}
+.streak-meter.tier-inferno .streak-num { color: #fff5d8; }
+@keyframes streak-pulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}

@@ -1,4 +1,5 @@
 import type { PlayerInfo, VaultInfo } from '../hooks/useFlip'
+import StreakMeter from './StreakMeter'
 
 type Props = {
   stats: PlayerInfo | null
@@ -48,6 +49,7 @@ export default function StatsBar({ stats, vault, loading }: Props) {
           <span className="stat-label">best streak</span>
         </div>
       )}
+      {stats && stats.currentStreak > 0 && <StreakMeter streak={stats.currentStreak} />}
       <div className="stat">
         <span className="stat-val">{stats ? stats.volume.toFixed(1) : vault?.totalVolume.toFixed(1) || '0'}</span>
         <span className="stat-label">volume</span>
