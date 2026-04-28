@@ -60,6 +60,12 @@ export default function ResultPanel({
 
   const isDemo = result.flipPda.equals(PublicKey.default)
 
+  const tweetWin = () => {
+    const txt = `just won ${result.payout.toFixed(3)} SOL on @flipordrain — 1.9x payout, 50/50 odds, all on-chain.\n\nflipping ${result.amount.toFixed(2)} → ${result.payout.toFixed(3)} 🎰`
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div className={`result-panel ${result.won ? 'win' : 'lose'}`}>
       {!result.won && <div className="lose-icon">💀</div>}
@@ -96,6 +102,12 @@ export default function ResultPanel({
               DOUBLE OR NOTHING
             </button>
           )}
+          <button className="btn-tweet" onClick={tweetWin} aria-label="share win on x">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            <span>tweet win</span>
+          </button>
         </div>
       ) : (
         <div className="result-actions">
