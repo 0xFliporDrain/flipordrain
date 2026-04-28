@@ -1663,3 +1663,43 @@ body::after {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══ NETWORK BANNER ═══ */
+.net-banner {
+  background: linear-gradient(90deg, rgba(255, 184, 0, 0.14), rgba(255, 184, 0, 0.06));
+  border-bottom: 1px solid rgba(255, 184, 0, 0.4);
+  color: #ffd460;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 9px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: 0.01em;
+}
+.net-banner code {
+  background: rgba(255, 184, 0, 0.15);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #ffe7a0;
+}
+.net-banner strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.net-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb800;
+  box-shadow: 0 0 10px #ffb800;
+  animation: net-pulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes net-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

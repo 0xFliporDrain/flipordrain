@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import Header from './components/Header'
+import NetworkBanner from './components/NetworkBanner'
 import FlipCard from './components/FlipCard'
 import CoinFlip from './components/CoinFlip'
 import ResultPanel from './components/ResultPanel'
@@ -98,6 +99,7 @@ export default function App() {
       {fx === 'lose' && <div className="lose-flash" />}
 
       <div className={`app ${fx === 'lose' ? 'screen-shake' : ''}`}>
+        <NetworkBanner />
         <Header balance={balance} stats={stats} loading={loading} connecting={connecting} />
 
         <nav className="tabs">
