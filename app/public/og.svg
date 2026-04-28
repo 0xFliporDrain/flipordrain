@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0d1320"/>
+      <stop offset="100%" stop-color="#05060a"/>
+    </radialGradient>
+    <linearGradient id="coin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff88"/>
+      <stop offset="100%" stop-color="#00b864"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g opacity="0.08" stroke="#00ff88" stroke-width="1">
+    <line x1="0" y1="158" x2="1200" y2="158"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="472" x2="1200" y2="472"/>
+    <line x1="300" y1="0" x2="300" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="900" y1="0" x2="900" y2="630"/>
+  </g>
+  <circle cx="900" cy="315" r="170" fill="none" stroke="#00ff88" stroke-width="2" opacity="0.25" filter="url(#glow)"/>
+  <circle cx="900" cy="315" r="140" fill="url(#coin)"/>
+  <text x="900" y="365" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="140" fill="#05060a">F</text>
+  <text x="80" y="240" font-family="Orbitron, sans-serif" font-weight="900" font-size="92" fill="#f4f4f6" letter-spacing="-2">FlipOrDrain</text>
+  <text x="80" y="320" font-family="Inter, sans-serif" font-weight="500" font-size="32" fill="#7a8090">on-chain coin flip · 50/50 · solana devnet</text>
+  <text x="80" y="430" font-family="Orbitron, sans-serif" font-weight="700" font-size="56" fill="#00ff88">win 1.9× · or drain it all</text>
+  <text x="80" y="560" font-family="Inter, sans-serif" font-weight="400" font-size="22" fill="#5a606e" letter-spacing="2">DOUBLE-OR-NOTHING IF YOU DARE</text>
+</svg>
