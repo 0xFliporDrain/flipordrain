@@ -89,13 +89,13 @@ export default function TransactionHistory({ history }: Props) {
           </div>
           {filter === 'all' ? (
             <>
-              <p className="tx-empty-title">no flips on the books</p>
-              <p className="tx-empty-hint">place a bet on the play tab — every flip lands here with the result, payout, and a link to the explorer.</p>
+              <p className="tx-empty-title">no flips yet — fortune favors the bold</p>
+              <p className="tx-empty-hint">head over to the play tab, pick a side, send it. every flip lands here with the result, payout, and an explorer link.</p>
             </>
           ) : (
             <>
-              <p className="tx-empty-title">no {filter} flips yet</p>
-              <p className="tx-empty-hint">switch the filter or place more flips to populate this view.</p>
+              <p className="tx-empty-title">nothing in the {filter} bucket</p>
+              <p className="tx-empty-hint">flip the filter back to <em>all</em>, or rack up more flips to populate this view.</p>
             </>
           )}
         </div>
