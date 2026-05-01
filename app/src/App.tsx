@@ -182,6 +182,8 @@ export default function App() {
           <span>solana devnet</span>
           <span className="ftr-sep">|</span>
           <span>1.9x payout</span>
+          <span className="ftr-sep">|</span>
+          <span className="ftr-fine">devnet sol only — no real value, gambling carries risk</span>
         </footer>
       </div>
     </>
