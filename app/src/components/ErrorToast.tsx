@@ -19,8 +19,10 @@ export default function ErrorToast({ error, onDismiss }: Props) {
     return () => clearTimeout(t)
   }, [error, onDismiss])
 
+  const retryable = error.type === 'network' || error.type === 'vrf_timeout'
+
   return (
-    <div className="err-toast" onClick={onDismiss}>
+    <div className={`err-toast ${retryable ? 'err-toast-retry' : ''}`} onClick={onDismiss}>
       <span className="err-icon">{ICONS[error.type]}</span>
       <span className="err-msg">{error.message}</span>
       <button className="err-close">&times;</button>

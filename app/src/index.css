@@ -1403,6 +1403,18 @@ body::after {
   max-width: 90vw;
 }
 
+/* harder-edge variant for retry-able failures — thicker red border + ring */
+.err-toast.err-toast-retry {
+  border-width: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 51, 85, 0.18), var(--glow-red), 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+.err-toast.err-toast-retry .err-icon::after {
+  content: '↻';
+  margin-left: 6px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
 .err-icon {
   font-size: 18px;
   color: var(--red);
