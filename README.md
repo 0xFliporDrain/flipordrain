@@ -4,7 +4,18 @@
 
 on-chain coin flip. 50/50 against the house. win 1.9x, lose it all, or push your luck with double-or-nothing.
 
+> **🎰 [play it on devnet →](https://flipordrain.app)** — connect any phantom/solflare/backpack wallet, hit the faucet, flip away.
+
 devnet program: `2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3`
+
+## screens
+
+| | |
+|---|---|
+| ![play tab](docs/screens/play.png) | ![history tab](docs/screens/history.png) |
+| **play** — pick side, set amount, watch the coin spin | **history** — every flip, filterable, explorer-linked |
+
+> screenshots are placeholders — drop fresh ones into `docs/screens/` when the next build lands.
 
 ## what
 
