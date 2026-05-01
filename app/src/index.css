@@ -1663,6 +1663,17 @@ body::after {
   }
 }
 
+/* tiny screens — coin was clipping side-padding on iphone se / older androids */
+@media (max-width: 380px) {
+  .app { padding: 0 4px; }
+  .play-area { padding: 12px 8px; }
+  .coin, .coin-3d { transform: scale(0.85); }
+  .stats-bar { gap: 10px; font-size: 11px; }
+  .bet-presets { gap: 6px; }
+  .ftr { padding: 14px 10px; font-size: 11px; }
+  .ftr-fine { display: block; margin-top: 6px; }
+}
+
 /* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
