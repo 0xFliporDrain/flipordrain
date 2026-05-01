@@ -1269,6 +1269,24 @@ body::after {
   opacity: 0.7;
 }
 
+/* leaderboard skeleton — shimmer rows while ws connects */
+.lb-skeleton { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.lb-skel-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+.lb-skel-bar {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+  background-size: 200% 100%;
+  border-radius: 4px;
+  height: 12px;
+  animation: lb-shimmer 1.4s linear infinite;
+}
+.lb-skel-rank { width: 18px; }
+.lb-skel-name { flex: 1; }
+.lb-skel-num { width: 48px; }
+@keyframes lb-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ═══ TABS ═══ */
 .tabs {
   display: flex;

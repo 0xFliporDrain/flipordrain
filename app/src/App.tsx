@@ -164,7 +164,7 @@ export default function App() {
 
               <section className="bottom-grid">
                 <LiveFeed feed={feed} connected={wsConnected} />
-                <Leaderboard leaders={leaders} />
+                <Leaderboard leaders={leaders} loading={!wsConnected} />
               </section>
             </div>
           ) : (
