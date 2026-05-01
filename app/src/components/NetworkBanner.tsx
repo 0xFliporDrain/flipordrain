@@ -17,8 +17,8 @@ export default function NetworkBanner() {
     <div className="net-banner" role="status" aria-live="polite">
       <span className="net-dot" aria-hidden />
       <span>
-        rpc: <strong>{tag}</strong> — flipordrain only ships on devnet.
-        switch <code>VITE_RPC_URL</code> to a devnet endpoint before betting.
+        heads up — your rpc is pointed at <strong>{tag}</strong>. flipordrain only lives on devnet,
+        so flip away once you swap <code>VITE_RPC_URL</code> back to a devnet endpoint.
       </span>
     </div>
   )
