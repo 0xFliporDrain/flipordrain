@@ -34,5 +34,5 @@ io.on('connection', (ws) => {
 const rpcUrl = process.env.HELIUS_WS_URL || process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com'
 startListener(rpcUrl, handleFlip)
 
-const PORT = process.env.WS_PORT || 3001
+const PORT = process.env.PORT || process.env.WS_PORT || 3001
 srv.listen(PORT, () => console.log(`ws alive on ${PORT}`))
