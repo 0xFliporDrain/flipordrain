@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "resolver": "ts-node src/resolver.ts",
+    "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
