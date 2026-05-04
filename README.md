@@ -1,6 +1,6 @@
 # FlipOrDrain
 
-![Solana](https://img.shields.io/badge/Solana-black?logo=solana) ![Anchor](https://img.shields.io/badge/Anchor-blueviolet) ![Status](https://img.shields.io/badge/status-devnet--live-yellow) ![License](https://img.shields.io/badge/license-MIT-green)
+![Solana](https://img.shields.io/badge/Solana-black?logo=solana) ![Anchor](https://img.shields.io/badge/Anchor-blueviolet) ![Status](https://img.shields.io/badge/status-live%20%C2%B7%20devnet-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
 
 on-chain coin flip. 50/50 against the house. win 1.9x, lose it all, or push your luck with double-or-nothing.
 
