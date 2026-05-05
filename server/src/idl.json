@@ -1,0 +1,750 @@
+{
+  "address": "2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3",
+  "metadata": {
+    "name": "flipordrain",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "on-chain coin flip w/ verifiable randomness"
+  },
+  "instructions": [
+    {
+      "name": "claim_winnings",
+      "discriminator": [
+        161,
+        215,
+        24,
+        59,
+        14,
+        236,
+        242,
+        221
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "flip_game",
+          "writable": true
+        },
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "double_or_nothing",
+      "discriminator": [
+        38,
+        26,
+        217,
+        36,
+        22,
+        171,
+        166,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "prev_flip",
+          "docs": [
+            "the previous winning flip — closed to prevent double claim"
+          ],
+          "writable": true
+        },
+        {
+          "name": "new_flip",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  108,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              },
+              {
+                "kind": "account",
+                "path": "vault.total_flips",
+                "account": "FlipVault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "fund_vault",
+      "discriminator": [
+        26,
+        33,
+        207,
+        242,
+        119,
+        108,
+        134,
+        73
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_vault",
+      "discriminator": [
+        48,
+        191,
+        163,
+        44,
+        71,
+        129,
+        63,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "house_edge_bps",
+          "type": "u16"
+        },
+        {
+          "name": "min_bet",
+          "type": "u64"
+        },
+        {
+          "name": "max_bet",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "place_flip",
+      "discriminator": [
+        173,
+        207,
+        171,
+        167,
+        10,
+        197,
+        41,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "flip_game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  108,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              },
+              {
+                "kind": "account",
+                "path": "vault.total_flips",
+                "account": "FlipVault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "resolve_flip",
+      "discriminator": [
+        138,
+        159,
+        123,
+        58,
+        102,
+        241,
+        115,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "flip_game",
+          "writable": true
+        },
+        {
+          "name": "player_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "flip_game.player",
+                "account": "FlipGame"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player",
+          "writable": true
+        },
+        {
+          "name": "resolver",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "result",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "toggle_pause",
+      "discriminator": [
+        238,
+        237,
+        206,
+        27,
+        255,
+        95,
+        123,
+        229
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw_house",
+      "discriminator": [
+        226,
+        236,
+        222,
+        156,
+        198,
+        230,
+        70,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "FlipGame",
+      "discriminator": [
+        136,
+        52,
+        240,
+        249,
+        90,
+        17,
+        103,
+        40
+      ]
+    },
+    {
+      "name": "FlipVault",
+      "discriminator": [
+        252,
+        146,
+        129,
+        85,
+        163,
+        80,
+        214,
+        114
+      ]
+    },
+    {
+      "name": "PlayerStats",
+      "discriminator": [
+        169,
+        146,
+        242,
+        176,
+        102,
+        118,
+        231,
+        172
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BetTooSmall",
+      "msg": "bet too small"
+    },
+    {
+      "code": 6001,
+      "name": "BetTooLarge",
+      "msg": "bet too large"
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientVaultBalance",
+      "msg": "vault cant cover payout"
+    },
+    {
+      "code": 6003,
+      "name": "UnauthorizedResolver",
+      "msg": "only vrf callback can resolve"
+    },
+    {
+      "code": 6004,
+      "name": "CannotDoubleOnLoss",
+      "msg": "cant double on a loss"
+    },
+    {
+      "code": 6005,
+      "name": "FlipNotResolved",
+      "msg": "flip not resolved yet"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "not the authority"
+    },
+    {
+      "code": 6007,
+      "name": "GamePaused",
+      "msg": "game is paused"
+    },
+    {
+      "code": 6008,
+      "name": "MathOverflow",
+      "msg": "math overflow"
+    },
+    {
+      "code": 6009,
+      "name": "MaxStreakReached",
+      "msg": "max streak reached"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadyClaimed",
+      "msg": "already claimed"
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyResolved",
+      "msg": "flip already resolved"
+    },
+    {
+      "code": 6012,
+      "name": "FlipNotWon",
+      "msg": "flip was not won"
+    }
+  ],
+  "types": [
+    {
+      "name": "FlipGame",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "vrf_request",
+            "type": "pubkey"
+          },
+          {
+            "name": "result",
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          },
+          {
+            "name": "is_double_or_nothing",
+            "type": "bool"
+          },
+          {
+            "name": "previous_flip",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "streak_count",
+            "type": "u8"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "resolved_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FlipVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "total_flips",
+            "type": "u64"
+          },
+          {
+            "name": "total_volume",
+            "type": "u64"
+          },
+          {
+            "name": "house_edge_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_bet",
+            "type": "u64"
+          },
+          {
+            "name": "max_bet",
+            "type": "u64"
+          },
+          {
+            "name": "is_paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlayerStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_flips",
+            "type": "u64"
+          },
+          {
+            "name": "total_won",
+            "type": "u64"
+          },
+          {
+            "name": "total_lost",
+            "type": "u64"
+          },
+          {
+            "name": "best_streak",
+            "type": "u8"
+          },
+          {
+            "name": "current_streak",
+            "type": "u8"
+          },
+          {
+            "name": "volume",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
