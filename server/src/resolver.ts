@@ -70,7 +70,10 @@ export function startResolver(): void {
   const conn = new Connection(RPC_URL, 'confirmed')
   const wallet = new Wallet(kp)
   const provider = new AnchorProvider(conn, wallet, { commitment: 'confirmed' })
-  const program = new Program(idl as any, provider)
+  // override the IDL's baked-in programId with the env-configured one — the
+  // checked-in IDL points at an older deploy
+  const liveIdl = { ...(idl as any), address: PROGRAM_ID.toString() }
+  const program = new Program(liveIdl, provider)
 
   const [vaultPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('vault')],
