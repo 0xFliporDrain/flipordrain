@@ -1340,6 +1340,7 @@ body::after {
 /* tab content transition */
 .tab-content {
   animation: tab-fade-in 0.25s ease;
+  padding-top: 22px;
 }
 
 @keyframes tab-fade-in {
