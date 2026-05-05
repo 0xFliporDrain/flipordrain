@@ -9,15 +9,35 @@ const PROGRAM_ID = new PublicKey(
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || 'https://api.devnet.solana.com'
 const POLL_INTERVAL = parseInt(process.env.RESOLVER_INTERVAL || '3000')
 
+function parseSecretKey(raw: string): number[] | null {
+  const trimmed = raw.trim()
+  // Try strict JSON first
+  try {
+    const arr = JSON.parse(trimmed)
+    if (Array.isArray(arr)) return arr
+  } catch {}
+  // Try as bare comma-separated digits (no enclosing brackets)
+  const inner = trimmed.replace(/^[\[\(]+/, '').replace(/[\]\)]+$/, '')
+  const nums = inner.split(/[,\s]+/).filter(Boolean).map(Number)
+  if (nums.length >= 32 && nums.every((n) => Number.isFinite(n) && n >= 0 && n <= 255)) {
+    return nums
+  }
+  return null
+}
+
 function loadKeypair(): Keypair | null {
   // Prefer env var (Railway, Vercel — anywhere without a real filesystem identity)
   const envKey = process.env.RESOLVER_KEYPAIR
   if (envKey) {
+    const arr = parseSecretKey(envKey)
+    if (!arr) {
+      console.error('RESOLVER_KEYPAIR is set but malformed (expected JSON array of bytes or comma-separated digits)')
+      return null
+    }
     try {
-      const raw = JSON.parse(envKey)
-      return Keypair.fromSecretKey(Uint8Array.from(raw))
+      return Keypair.fromSecretKey(Uint8Array.from(arr))
     } catch (e: any) {
-      console.error('RESOLVER_KEYPAIR is set but malformed:', e.message)
+      console.error('RESOLVER_KEYPAIR parsed but rejected by Keypair.fromSecretKey:', e.message)
       return null
     }
   }
