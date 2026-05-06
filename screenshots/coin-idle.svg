@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <rect width="800" height="450" fill="#0a0a0f"/>
+  <circle cx="400" cy="225" r="120" fill="#1a1a24" stroke="#39ff14" stroke-width="2"/>
+  <text x="400" y="240" text-anchor="middle" fill="#39ff14" font-family="Orbitron, monospace" font-size="48" font-weight="700">FLIP</text>
+  <text x="400" y="400" text-anchor="middle" fill="#777" font-family="Orbitron, monospace" font-size="14">screenshot · idle state · 1.0 SOL</text>
+</svg>

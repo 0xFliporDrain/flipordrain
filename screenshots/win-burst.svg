@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <rect width="800" height="450" fill="#0a0a0f"/>
+  <circle cx="400" cy="225" r="120" fill="#1a1a24" stroke="#39ff14" stroke-width="3"/>
+  <text x="400" y="220" text-anchor="middle" fill="#39ff14" font-family="Orbitron, monospace" font-size="36" font-weight="700">WIN</text>
+  <text x="400" y="260" text-anchor="middle" fill="#fff" font-family="Orbitron, monospace" font-size="20">+1.9 SOL</text>
+  <text x="400" y="400" text-anchor="middle" fill="#777" font-family="Orbitron, monospace" font-size="14">screenshot · post-flip · streak 3</text>
+</svg>

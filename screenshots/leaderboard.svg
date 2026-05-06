@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <rect width="800" height="450" fill="#0a0a0f"/>
+  <text x="60" y="60" fill="#39ff14" font-family="Orbitron, monospace" font-size="20">// LEADERBOARD</text>
+  <line x1="60" y1="80" x2="740" y2="80" stroke="#39ff14" stroke-width="1" opacity="0.3"/>
+  <text x="60" y="130" fill="#fff" font-family="monospace" font-size="14">1. degen_4Tx8...    +12.4 SOL</text>
+  <text x="60" y="170" fill="#fff" font-family="monospace" font-size="14">2. ape_9Mn3...     +8.1 SOL</text>
+  <text x="60" y="210" fill="#fff" font-family="monospace" font-size="14">3. jito_xQz1...    +5.5 SOL</text>
+  <text x="400" y="400" text-anchor="middle" fill="#777" font-family="Orbitron, monospace" font-size="14">screenshot · top winners · 24h window</text>
+</svg>
