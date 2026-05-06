@@ -99,4 +99,4 @@ anchor test
 
 ## license
 
-MIT
+mit. fork it, ship it, lose your shirt with it — idc. just don't sue me when the coin lands wrong. full text: [LICENSE](LICENSE).
