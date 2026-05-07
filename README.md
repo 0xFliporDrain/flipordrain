@@ -37,7 +37,7 @@ a single-action gambling primitive on solana. no swaps, no order books, no LP po
 
 every flip = its own PDA (closed when resolved + claimed, rent refunded). vault holds house liquidity. stats PDA tracks per-player totals so the leaderboard reads from chain, not a database.
 
-## stack
+## stack & glue
 
 - **anchor 0.32** — single program, 8 instructions
 - **vite + react 19** — dark/neon UI, Orbitron + Inter, raw CSS
