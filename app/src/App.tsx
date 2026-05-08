@@ -160,7 +160,7 @@ export default function App() {
                 </section>
               )}
 
-              <StatsBar stats={stats} vault={connected ? vault : null} loading={loading && connected} connected={connected} />
+              <StatsBar stats={stats} vault={vault} loading={loading && connected} />
 
               <section className="bottom-grid">
                 <LiveFeed feed={feed} connected={wsConnected} />

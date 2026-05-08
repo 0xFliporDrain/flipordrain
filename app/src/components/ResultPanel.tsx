@@ -61,7 +61,7 @@ export default function ResultPanel({
   const isDemo = result.flipPda.equals(PublicKey.default)
 
   const tweetWin = () => {
-    const txt = `just won ${result.payout.toFixed(3)} SOL on @FlipOrDrain_app — 1.9x payout, 50/50 odds, all on-chain.\n\nflipping ${result.amount.toFixed(2)} → ${result.payout.toFixed(3)} 🎰`
+    const txt = `just won ${result.payout.toFixed(3)} SOL on @flipordrain — 1.9x payout, 50/50 odds, all on-chain.\n\nflipping ${result.amount.toFixed(2)} → ${result.payout.toFixed(3)} 🎰`
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }

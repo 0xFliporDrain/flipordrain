@@ -1,12 +1,12 @@
 # FlipOrDrain
 
-![Solana](https://img.shields.io/badge/Solana-black?logo=solana) ![Anchor](https://img.shields.io/badge/Anchor-blueviolet) ![Status](https://img.shields.io/badge/status-live%20%C2%B7%20devnet-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
+![Solana](https://img.shields.io/badge/Solana-black?logo=solana) ![Anchor](https://img.shields.io/badge/Anchor-blueviolet) ![Status](https://img.shields.io/badge/status-devnet--live-yellow) ![License](https://img.shields.io/badge/license-MIT-green)
 
 on-chain coin flip. 50/50 against the house. win 1.9x, lose it all, or push your luck with double-or-nothing.
 
 > **🎰 [play it on devnet →](https://flipordrain.app)** — connect any phantom/solflare/backpack wallet, hit the faucet, flip away.
 
-devnet program: `8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG`
+devnet program: `2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3`
 
 ## screens
 
@@ -37,7 +37,7 @@ a single-action gambling primitive on solana. no swaps, no order books, no LP po
 
 every flip = its own PDA (closed when resolved + claimed, rent refunded). vault holds house liquidity. stats PDA tracks per-player totals so the leaderboard reads from chain, not a database.
 
-## stack & glue
+## stack
 
 - **anchor 0.32** — single program, 8 instructions
 - **vite + react 19** — dark/neon UI, Orbitron + Inter, raw CSS
@@ -99,4 +99,4 @@ anchor test
 
 ## license
 
-mit. fork it, ship it, lose your shirt with it — idc. just don't sue me when the coin lands wrong. full text: [LICENSE](LICENSE).
+MIT

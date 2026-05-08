@@ -1,7 +1,6 @@
 import { Server } from 'socket.io'
 import http from 'http'
 import { startListener } from './listener'
-import { startResolver } from './resolver'
 import { updateBoard, getTop, getPlayer } from './leaderboard'
 import { FlipEvent } from './types'
 
@@ -35,8 +34,5 @@ io.on('connection', (ws) => {
 const rpcUrl = process.env.HELIUS_WS_URL || process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com'
 startListener(rpcUrl, handleFlip)
 
-// start the on-chain resolver loop (if a signing key is available)
-startResolver()
-
-const PORT = process.env.PORT || process.env.WS_PORT || 3001
+const PORT = process.env.WS_PORT || 3001
 srv.listen(PORT, () => console.log(`ws alive on ${PORT}`))

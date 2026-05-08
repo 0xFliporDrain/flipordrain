@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { BET_PRESETS } from '../lib/constants'
 import type { FlipState, VaultInfo } from '../hooks/useFlip'
@@ -11,18 +11,12 @@ type Props = {
   onDemo: (amount: number) => void
 }
 
-const FLIP_DEBOUNCE_MS = 300
-
 export default function FlipCard({ state, vault, balance, onFlip, onDemo }: Props) {
   const { connected } = useWallet()
   const [amount, setAmount] = useState(0.1)
   const [err, setErr] = useState('')
-  const lastClickRef = useRef(0)
 
   const handleFlip = () => {
-    const now = Date.now()
-    if (now - lastClickRef.current < FLIP_DEBOUNCE_MS) return
-    lastClickRef.current = now
     setErr('')
     if (!vault) {
       setErr('vault not loaded')
