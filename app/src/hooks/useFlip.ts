@@ -287,7 +287,7 @@ export function useFlip() {
         // send without waiting for full confirmation — devnet is slow
         const signed = await prog.provider.wallet.signTransaction(tx)
         const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true })
-        console.log('flip sent:', sig)
+        if (import.meta.env.DEV) console.log('flip sent:', sig.slice(0, 8) + '…')
 
         // start polling immediately — don't wait for confirmTransaction
         setState('waiting')
@@ -295,16 +295,16 @@ export function useFlip() {
 
         // confirm in background — if it fails, polling will catch the result anyway
         connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
-          .catch((e) => console.warn('confirm bg:', e?.message?.slice(0, 60)))
+          .catch((e) => { if (import.meta.env.DEV) console.warn('confirm bg:', e?.message?.slice(0, 60)) })
 
       } catch (e: any) {
-        console.error('flip error:', e)
+        if (import.meta.env.DEV) console.error('flip error:', e)
 
         const msg = e?.message || String(e)
 
         // if tx was sent but confirmation timed out — still poll
         if (flipPda && (msg.includes('not confirmed') || msg.includes('timeout') || msg.includes('Timed out'))) {
-          console.log('confirmation timed out but tx may have landed — polling')
+          if (import.meta.env.DEV) console.log('confirmation timed out but tx may have landed — polling')
           setState('waiting')
           pollForResult(flipPda, amountSol, false)
           return
@@ -312,7 +312,7 @@ export function useFlip() {
 
         // if tx already processed — it went through before, refresh and poll
         if (flipPda && (msg.includes('already been processed') || msg.includes('already processed'))) {
-          console.log('tx already processed — polling for result')
+          if (import.meta.env.DEV) console.log('tx already processed — polling for result')
           setState('waiting')
           pollForResult(flipPda, amountSol, false)
           refreshVault()
@@ -348,11 +348,11 @@ export function useFlip() {
       const { prog } = get()
       const signed = await prog.provider.wallet.signTransaction(tx)
       const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true })
-      console.log('tx sent:', sig)
+      if (import.meta.env.DEV) console.log('tx sent:', sig.slice(0, 8) + '…')
 
       // confirm in bg — don't block ui
       connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed')
-        .catch((e) => console.warn('confirm bg:', e?.message?.slice(0, 60)))
+        .catch((e) => { if (import.meta.env.DEV) console.warn('confirm bg:', e?.message?.slice(0, 60)) })
 
       return sig
     },
@@ -450,13 +450,13 @@ export function useFlip() {
         if (newFlipPda) pollForResult(newFlipPda, prevPayout, true)
         setResult((prev) => prev ? { ...prev, flipPda: newFlipPda!, canDouble: false } : null)
       } catch (e: any) {
-        console.error('double error:', e)
+        if (import.meta.env.DEV) console.error('double error:', e)
 
         const msg = e?.message || String(e)
 
         // timeout or already processed — tx probably went through, poll anyway
         if (newFlipPda && (msg.includes('not confirmed') || msg.includes('timeout') || msg.includes('already processed'))) {
-          console.log('double tx may have landed — polling')
+          if (import.meta.env.DEV) console.log('double tx may have landed — polling')
           setState('waiting')
           const prevPayout = result?.payout || 0
           if (newFlipPda) pollForResult(newFlipPda, prevPayout, true)

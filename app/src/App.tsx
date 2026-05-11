@@ -40,17 +40,9 @@ export default function App() {
 
   const { feed, leaders, connected: wsConnected, addRealFlip } = useSocket()
 
-  const resultRef = useRef(result)
-  useEffect(() => { resultRef.current = result }, [result])
-
-  const pkRef = useRef(publicKey)
-  useEffect(() => { pkRef.current = publicKey }, [publicKey])
-
-  const statsRef = useRef(stats)
-  useEffect(() => { statsRef.current = stats }, [stats])
-
-  const addRealFlipRef = useRef(addRealFlip)
-  useEffect(() => { addRealFlipRef.current = addRealFlip }, [addRealFlip])
+  // track the last flipPda we announced to the live feed so a fast
+  // flip→won→double cycle doesn't replay the previous result
+  const announcedPdaRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (prevState.current === 'waiting' && state === 'won') {
@@ -61,22 +53,31 @@ export default function App() {
       setFx('lose')
       setTimeout(() => setFx(null), 600)
     }
-    // inject real flip into live feed
-    const r = resultRef.current
-    const pk = pkRef.current
-    if ((prevState.current === 'waiting') && (state === 'won' || state === 'lost') && r && pk) {
-      addRealFlipRef.current({
-        player: pk.toBase58(),
-        amt: r.amount * 1e9,
-        won: r.won,
-        payout: r.won ? r.payout * 1e9 : 0,
-        streak: statsRef.current?.currentStreak || 0,
-        tx: '',
-        ts: Date.now(),
-      })
+
+    // inject real flip into live feed — read FRESH state/result/stats from
+    // closure (not stale refs) and guard against duplicate announcements
+    if (
+      prevState.current === 'waiting' &&
+      (state === 'won' || state === 'lost') &&
+      result &&
+      publicKey
+    ) {
+      const pdaKey = result.flipPda.toBase58()
+      if (announcedPdaRef.current !== pdaKey) {
+        announcedPdaRef.current = pdaKey
+        addRealFlip({
+          player: publicKey.toBase58(),
+          amt: result.amount * 1e9,
+          won: result.won,
+          payout: result.won ? result.payout * 1e9 : 0,
+          streak: stats?.currentStreak || 0,
+          tx: '',
+          ts: Date.now(),
+        })
+      }
     }
     prevState.current = state
-  }, [state])
+  }, [state, result, stats, publicKey, addRealFlip])
 
   return (
     <>
