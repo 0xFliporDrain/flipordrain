@@ -4,7 +4,7 @@
 
 on-chain coin flip. 50/50 against the house. win 1.9x, lose it all, or push your luck with double-or-nothing.
 
-> **🎰 [play it on devnet →](https://flipordrain.app)** — connect any phantom/solflare/backpack wallet, hit the faucet, flip away.
+> **🎰 [play it on devnet →](https://flipordrain.vercel.app)** — connect any phantom/solflare/backpack wallet, hit the faucet, flip away.
 
 devnet program: `8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG`
 
