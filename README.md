@@ -6,7 +6,7 @@ on-chain coin flip. 50/50 against the house. win 1.9x, lose it all, or push your
 
 > **🎰 [play it on devnet →](https://flipordrain.app)** — connect any phantom/solflare/backpack wallet, hit the faucet, flip away.
 
-devnet program: `2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3`
+devnet program: `8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG`
 
 ## screens
 
@@ -37,7 +37,7 @@ a single-action gambling primitive on solana. no swaps, no order books, no LP po
 
 every flip = its own PDA (closed when resolved + claimed, rent refunded). vault holds house liquidity. stats PDA tracks per-player totals so the leaderboard reads from chain, not a database.
 
-## stack
+## stack & glue
 
 - **anchor 0.32** — single program, 8 instructions
 - **vite + react 19** — dark/neon UI, Orbitron + Inter, raw CSS

@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import idl from './idl.json'
 
 const PROGRAM_ID = new PublicKey(
-  process.env.PROGRAM_ID || '2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3'
+  process.env.PROGRAM_ID || '8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG'
 )
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || 'https://api.devnet.solana.com'
 const POLL_INTERVAL = parseInt(process.env.RESOLVER_INTERVAL || '3000')

@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3");
+declare_id!("8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG");
 
 // PDA seeds + house params live at the crate root — tiny, not worth a file.
 pub const VAULT_SEED: &[u8] = b"vault";

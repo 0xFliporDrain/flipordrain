@@ -8,7 +8,7 @@ skip-lint = false
 flipordrain = "8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG"
 
 [programs.localnet]
-flipordrain = "2JLBJ794NCQAwmqKVmcKjcKYmPkCfpXwxpRvDo4BWdh3"
+flipordrain = "8SXWVRBFoPCqbLZiDA9oY9EFbD9NVbU7SryoxJQt3ssG"
 
 [provider]
 cluster = "localnet"
