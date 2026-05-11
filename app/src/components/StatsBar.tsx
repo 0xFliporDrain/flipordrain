@@ -5,9 +5,10 @@ type Props = {
   stats: PlayerInfo | null
   vault: VaultInfo | null
   loading?: boolean
+  connected?: boolean
 }
 
-export default function StatsBar({ stats, vault, loading }: Props) {
+export default function StatsBar({ stats, vault, loading, connected }: Props) {
   if (loading && !stats && !vault) {
     return (
       <div className="stats-bar">
@@ -17,6 +18,27 @@ export default function StatsBar({ stats, vault, loading }: Props) {
             <span className="stat-label shimmer">---</span>
           </div>
         ))}
+      </div>
+    )
+  }
+
+  // pre-connect: zero out everything — real numbers wake up after wallet hooks
+  // up and the program account fetch lands.
+  if (!connected) {
+    return (
+      <div className="stats-bar fade-in">
+        <div className="stat">
+          <span className="stat-val muted">0.0</span>
+          <span className="stat-label">vault SOL</span>
+        </div>
+        <div className="stat">
+          <span className="stat-val muted">0</span>
+          <span className="stat-label">flips</span>
+        </div>
+        <div className="stat">
+          <span className="stat-val muted">0.0</span>
+          <span className="stat-label">volume</span>
+        </div>
       </div>
     )
   }

@@ -12,3 +12,5 @@ REVIEWS.md
 REFERENCES.md
 deploy-keypair.json
 *-keypair.json
+.vercel/
+.vercelignore

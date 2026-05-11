@@ -1033,6 +1033,7 @@ body::after {
 }
 .stat-val.pos { color: var(--accent); }
 .stat-val.neg { color: var(--red); }
+.stat-val.muted { color: var(--text); opacity: 0.45; }
 
 /* ═══ BOTTOM GRID ═══ */
 .bottom-grid {
@@ -1339,6 +1340,7 @@ body::after {
 /* tab content transition */
 .tab-content {
   animation: tab-fade-in 0.25s ease;
+  padding-top: 22px;
 }
 
 @keyframes tab-fade-in {
